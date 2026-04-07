@@ -1,0 +1,14 @@
+# Ignore the real secret files
+.env
+app/portfolio_targets.json
+app/portfolio.md
+
+# Ignore Python caches
+__pycache__/
+*.pyc
+
+# Ignore OpenClaw's auto-generated local hidden folder (if it's still lying around)
+.openclaw/
+
+# Ignore Mac system files
+.DS_Store

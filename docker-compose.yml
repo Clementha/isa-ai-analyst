@@ -1,0 +1,25 @@
+services:
+  investclaw_agent:
+    image: node:22-slim
+    container_name: openclaw_invest_bot
+    env_file:
+      - .env
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      - TZ=Europe/London
+    volumes:
+          # Map the Python scripts
+          - ./app:/app
+          
+          # Inject the clean Heartbeat schedule
+          - ./config/HEARTBEAT.md:/root/.openclaw/workspace/HEARTBEAT.md
+          
+          # Inject the strict AI rulebook
+          - ./config/IDENTITY.md:/root/.openclaw/workspace/agent_memory/IDENTITY.md
+
+          # Inject who the bot is talking to      
+          - ./config/USER.md:/root/.openclaw/workspace/agent_memory/USER.md
+          
+    # Locked OpenClaw to version 2026.3.28 for absolute stability
+    command: sh -c "apt-get update && apt-get install -y python3 python3-pip python3-requests ca-certificates && pip3 install requests schedule --break-system-packages && npm install -g openclaw@2026.3.28 && (python3 /app/scheduler.py &) && openclaw gateway --allow-unconfigured"
