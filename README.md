@@ -6,6 +6,7 @@ IsaInvestClaw is an autonomous, AI-powered quantitative analysis engine built sp
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?logo=windows&logoColor=white)](https://www.docker.com/products/docker-desktop/)
 [![Runs on Docker](https://img.shields.io/badge/Runs%20on-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/products/docker-desktop/)
 [![Telegram Bot](https://img.shields.io/badge/Interface-Telegram-26A5E4?logo=telegram&logoColor=white)](https://telegram.org/)
 
@@ -22,13 +23,15 @@ IsaInvestClaw is an autonomous, AI-powered quantitative analysis engine built sp
   - [3. Configure Secrets](#3-configure-your-secrets-env-file)
   - [4. Set Portfolio Targets](#4-set-your-portfolio-targets)
   - [5. Launch the Engine](#5-launch-the-engine)
-  - [6. Talk to Your Bot](#6-talk-to-your-bot)
+  - [6. Pair Your Telegram Bot](#6-pair-your-telegram-bot)
+  - [7. Talk to Your Bot](#7-talk-to-your-bot)
 - [Environment Variable Reference](#-environment-variable-reference)
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Updating & Maintenance](#-updating--maintenance)
 - [Troubleshooting](#-troubleshooting)
 - [License](#-license)
 - [Disclaimer](#️-disclaimer)
+- [Good Luck & Support](#-good-luck--support-the-project)
 
 ---
 
@@ -48,15 +51,16 @@ IsaInvestClaw is an autonomous, AI-powered quantitative analysis engine built sp
 
 IsaInvestClaw is built with strict safety boundaries to protect both your machine and your capital.
 
-- **Isolated & Containerised:** The bot runs entirely inside a Docker container. It cannot see, access, or alter your host operating system. You can start, stop, or delete it without affecting your computer in any way.
-- **No Direct Trade Execution:** The bot will never have access to your trading account password. It cannot perform trades autonomously — it only prepares recommendations based on read-only API permissions.
+- **Isolated & Containerised:** The bot runs entirely inside a Docker container, with its own filesystem and process space completely separated from your host OS. It can only access files within the project folder that you explicitly mounted — it has no visibility into your macOS applications, other files, or system settings.†
+- **No Direct Trade Execution:** The bot cannot perform trades autonomously, as it never has access to your trading account password. It only provides trade recommendations based on read-only API permissions.
 - **Cost-Capped AI:** Even if the AI enters an unexpected loop, usage is restricted to your available API credits. You are responsible for setting hard billing limits in your API provider accounts to prevent unexpected charges.
+- **Minimised Prompt Injection Risk:** The bot does not browse arbitrary web pages to gather news. It exclusively consumes structured financial data from EODHD, an industry-standard market data API. This means it is not exposed to maliciously crafted web content designed to manipulate AI behaviour — significantly reducing the risk of prompt injection attacks.
 
 ---
 
 ## 🛠️ Prerequisites & Recommended Tools
 
-> **Platform note:** This setup guide is currently designed for **macOS**. Linux support is planned.
+> **Platform support:** Full setup guide provided for **macOS**. **Windows** support via Docker Desktop and WSL2 is also planned — see the note in Step 1 below.
 
 ### Software to Install
 
@@ -68,11 +72,54 @@ IsaInvestClaw is built with strict safety boundaries to protect both your machin
 
 > *Note: Some links below are affiliate links. Using them helps support the continued open-source development of IsaInvestClaw at no extra cost to you.*
 
-| Service | Purpose | Link |
-|---|---|---|
-| **Trading 212** | Free UK ISA brokerage with API access | [Sign Up](https://www.trading212.com/invite/4DtCF9r91Ms) |
-| **EODHD APIs** | End-of-day pricing and financial news data | [Sign Up](https://eodhd.com?via=clementha) |
-| **Novita AI** | LLM provider powering the bot's "brain" | [Sign Up](https://novita.ai/?ref=zmyynju&utm_source=affiliate) |
+You will need accounts and API keys from three services. Follow the steps below for each one before moving on to the Quick Start guide.
+
+---
+
+#### 🏦 Trading 212 — Free UK Stocks ISA with API Access
+
+1. Click the affiliate link to sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
+2. Complete the registration form and verify your identity as prompted
+3. When asked to choose an account type, select **Stocks ISA**
+4. Once your account is open, tap **Add Funds** and make a deposit of at least **£1**
+
+   > ⚠️ **This deposit is required.** The API (Beta) option will not appear in your settings until your ISA account has been funded at least once.
+
+5. Go to **Settings** (the gear icon, bottom-right)
+6. Scroll down and tap **API (Beta)**
+7. Tap **Generate API Key** — Trading 212 will display your **Key ID** and **Secret Key**
+8. Copy both values immediately and paste them into your `.env` file as `T212_KEY_ID` and `T212_SECRET`
+
+   > 🔒 The Secret Key is only shown once. If you lose it, you will need to revoke and regenerate the key.
+
+---
+
+#### 📊 EODHD — End-of-Day Market Data & Financial News
+
+1. Click the affiliate link to sign up: **[Create EODHD Account](https://eodhd.com?via=clementha)**
+2. Complete the registration form and verify your email address
+3. Once logged in, go to your **Dashboard**
+4. Your API key is shown at the top of the Dashboard under **Your API Token**
+5. Click **Copy** and paste the key into your `.env` file as `EODHD_API_KEY`
+
+   > ℹ️ **Free tier:** EODHD's free plan includes **20 API calls per day**. Each stock price lookup consumes 1 call, and each news fetch consumes 5 calls. This is sufficient for light users tracking a small number of stocks with twice-daily runs — but if you add many holdings or increase your run frequency, consider upgrading to a paid plan.
+
+---
+
+#### 🤖 Novita AI — LLM Provider (the Bot's "Brain")
+
+1. Click the affiliate link to sign up: **[Create Novita AI Account](https://novita.ai/?ref=zmyynju&utm_source=affiliate)**
+2. Complete the registration form and verify your email address
+3. Go to **Billing** and add credits — a minimum of **USD $10** is recommended to get started comfortably
+
+   > ℹ️ In our experience, USD $10 is typically enough for **more than a month** of light usage (a small portfolio, twice-daily runs). Your consumption will vary depending on the number of holdings and how often you chat with the bot.
+
+4. While in Billing, set a **spending limit** to cap the maximum amount the AI can consume in a given period — this protects against unexpected costs if the bot enters an unexpected loop
+5. Go to **API Keys** (in the left sidebar or account menu)
+6. Click **Create API Key**, give it a name (e.g. `IsaInvestClaw`), and confirm
+7. Copy the generated key and paste it into your `.env` file as `LLM_API_KEY`
+
+   > 🔒 The API key is only shown once at creation. Store it securely.
 
 ---
 
@@ -86,6 +133,8 @@ Open your Mac's **Terminal** and run:
 git clone https://github.com/yourusername/IsaInvestClaw.git
 cd IsaInvestClaw
 ```
+
+> **Windows users:** Install [Git for Windows](https://git-scm.com/download/win) and [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) (requires WSL2). Then run the same commands above in **PowerShell** or **Windows Terminal**. All subsequent `docker compose` commands are identical.
 
 ---
 
@@ -147,13 +196,10 @@ Your config file will look like this:
 {
   "isa_allowance_target": 20000,
   "target_cash_pct": 0.25,
-  "run_times": ["10:30", "22:30"],
-  "holdings": {
-    "VOD.LSE": 0.15,
-    "BT-A.LSE": 0.15,
-    "NWG.LSE": 0.15,
-    "LLOY.LSE": 0.15,
-    "LGEN.LSE": 0.15
+\  "holdings": {
+    "VOD.LSE": 0.25,
+    "BT-A.LSE": 0.25,
+    "NWG.LSE": 0.25
   }
 }
 ```
@@ -163,6 +209,8 @@ See the [Portfolio Config Reference](#-portfolio-config-reference) below for a f
 ---
 
 ### 5. Launch the Engine
+
+> **Why this comes before pairing:** The `.env` file you configured in Step 3 is loaded by the container on startup. The bot needs your Telegram token and all API keys present before it can run — including before it can generate a pairing code. Always complete Steps 3 and 4 first.
 
 Make sure **Docker Desktop** is open and running, then in Terminal:
 
@@ -177,9 +225,34 @@ docker compose up -d
 
 ---
 
-### 6. Talk to Your Bot
+### 6. Pair Your Telegram Bot
 
-Open Telegram and message your new bot. Here are some useful prompts to get started:
+> This step is **required** before the bot will respond to anyone. OpenClaw uses a zero-trust pairing system — it ignores all messages until the owner explicitly approves a one-time pairing code. This prevents anyone who discovers your bot username from being able to issue commands to your AI.
+
+**Here's how it works:**
+
+1. Make sure your container is running (`docker compose up -d`)
+2. Open Telegram and search for your bot by the username you set in @BotFather (e.g. `@MyIsaClawBot`)
+3. Send any message — `hello` is fine
+4. The bot replies with a short alphanumeric pairing code, for example:
+   ```
+   Your pairing code is: Z2EDQKMK
+   Approve this code to continue.
+   ```
+5. Copy that code, go back to your **Terminal**, and run:
+   ```bash
+   docker compose run --rm openclaw-cli pairing approve telegram Z2EDQKMK
+   ```
+   *(Replace `Z2EDQKMK` with the actual code the bot sent you)*
+6. The bot confirms the connection — you're ready to go
+
+> ⚠️ **Note:** You may need to repeat this pairing step if you restart the container or change your bot token. If the bot keeps generating a new pairing code on every message without accepting the approval, check the [Troubleshooting](#-troubleshooting) section below.
+
+---
+
+### 7. Talk to Your Bot
+
+Open Telegram and message your bot. Here are some useful prompts to get started:
 
 | Message | Action |
 |---|---|
@@ -215,7 +288,6 @@ Full reference for all fields in `app/portfolio_targets.json`:
 |---|---|---|
 | `isa_allowance_target` | `number` | Your total ISA allowance for the tax year in GBP (e.g. `20000`) |
 | `target_cash_pct` | `number` | Fraction of the portfolio to keep as cash reserve (e.g. `0.25` = 25%) |
-| `run_times` | `array` | UTC+1 times to run the engine each day (e.g. `["10:30", "22:30"]`) |
 | `holdings` | `object` | Map of ticker symbols to target portfolio weight. Weights should sum to `1.0` minus `target_cash_pct` |
 
 > ℹ️ **Ticker format:** Use the EODHD format — `SYMBOL.EXCHANGE` (e.g. `VOD.LSE` for Vodafone on the London Stock Exchange).
@@ -248,15 +320,21 @@ docker compose down --volumes --rmi all
 
 ## 🩺 Troubleshooting
 
-**Bot is not responding on Telegram**
+**Bot sends a pairing code but never accepts the approval**
+- This is a known OpenClaw issue when the container is restarted mid-session — the session state is lost
+- Fix: stop the container fully (`docker compose down`), bring it back up (`docker compose up -d`), then redo the pairing step from scratch
+
+**Bot is not responding on Telegram at all**
 - Confirm that Docker is running: `docker compose ps`
 - Check logs for errors: `docker compose logs -f`
+- Ensure you completed the [pairing step](#6-pair-your-telegram-bot) — the bot will silently ignore all messages until pairing is approved
 - Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are correct in `.env`
 
 **"API Key invalid" error in logs**
 - Double-check you copied the full key with no trailing spaces into `.env`
 - Ensure your EODHD or Novita account subscription is active
-- Confirm `T212_KEY_ID` and `T212_SECRET` are both filled in (both are required)
+- Confirm both `T212_KEY_ID` and `T212_SECRET` are filled in (both are required)
+- If your Trading 212 API key stopped working, check that your ISA account still has funds — a zero balance can deactivate API access
 
 **Reports not arriving at scheduled times**
 - Confirm your system clock and timezone are correct (the bot uses your Docker host's time)
@@ -265,6 +343,10 @@ docker compose down --volumes --rmi all
 
 **Docker Desktop won't start on Apple Silicon**
 - Ensure Rosetta 2 is installed: `softwareupdate --install-rosetta`
+
+**Docker Desktop won't start on Windows**
+- Ensure WSL2 is installed and enabled: run `wsl --install` in PowerShell (as Administrator)
+- Enable WSL2 integration in Docker Desktop → Settings → Resources → WSL Integration
 
 ---
 
@@ -277,3 +359,22 @@ This project is open-source and available under the [MIT License](LICENSE).
 ## ⚠️ Disclaimer
 
 This software is provided for **educational and informational purposes only**. It does not constitute financial advice. The AI can hallucinate, and market data APIs can return incorrect data. **Always verify recommendations manually before taking any action.** Never risk capital you cannot afford to lose. Past performance is not indicative of future results.
+
+---
+
+## 🍀 Good Luck & Support the Project
+
+Investing is part discipline, part patience — and a little bit of luck never hurts. We hope IsaInvestClaw helps you make more informed, confident decisions with your ISA.
+
+If the bot has ever saved you from a bad trade, helped you spot an opportunity, or simply kept you better organised — consider buying us a coffee. Every contribution goes directly towards new features, better models, and keeping the project open-source and free.
+
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/yourusername)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a-Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/yourusername)
+
+> *"The stock market is a device for transferring money from the impatient to the patient."* — Warren Buffett
+
+Good luck out there. 📈
+
+---
+
+† No Docker container is a perfect security fortress. Containers share the host's network stack by default, meaning a severely compromised container — for example, one manipulated via prompt injection — could theoretically attempt to probe your host machine over the local Docker bridge network. This is an advanced and unlikely threat, but it is real. IsaInvestClaw does not mount the Docker socket and does not run in privileged mode, which significantly limits the blast radius of any such attack. For the vast majority of users, the container isolation is more than sufficient — but you should be aware it is not equivalent to a fully separate virtual machine.
