@@ -19,12 +19,14 @@ IsaInvestClaw is an autonomous, AI-powered quantitative analysis engine built sp
 - [Prerequisites](#️-prerequisites--recommended-tools)
 - [Quick Start](#-quick-start-installation-guide)
   - [1. Clone the Repository](#1-download-the-code)
-  - [2. Set Up Your Telegram Bot](#2-set-up-your-telegram-bot)
-  - [3. Configure Secrets](#3-configure-your-secrets-env-file)
-  - [4. Set Portfolio Targets](#4-set-your-portfolio-targets)
-  - [5. Launch the Engine](#5-launch-the-engine)
-  - [6. Pair Your Telegram Bot](#6-pair-your-telegram-bot)
-  - [7. Talk to Your Bot](#7-talk-to-your-bot)
+  - [2. Create Your `.env` File](#2-create-your-env-file)
+  - [3. Create Your Accounts & Gather API Keys](#3-create-your-accounts--gather-api-keys)
+  - [4. Fill In Your `.env` File](#4-fill-in-your-env-file)
+  - [5. Set Up Your Telegram Bot](#5-set-up-your-telegram-bot)
+  - [6. Set Portfolio Targets](#6-set-your-portfolio-targets)
+  - [7. Launch the Engine](#7-launch-the-engine)
+  - [8. Pair Your Telegram Bot](#8-pair-your-telegram-bot)
+  - [9. Talk to Your Bot](#9-talk-to-your-bot)
 - [Environment Variable Reference](#-environment-variable-reference)
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Updating & Maintenance](#-updating--maintenance)
@@ -68,58 +70,17 @@ IsaInvestClaw is built with strict safety boundaries to protect both your machin
 2. **[Visual Studio Code](https://code.visualstudio.com/)** — A free editor to safely configure your settings
 3. **[Telegram](https://telegram.org/)** — Download the app on your phone and Mac to communicate with the bot
 
-### Required Accounts & API Keys
+### Accounts You Will Need
+
+You will need accounts from the three services below. You do **not** need to set these up before cloning the project — the Quick Start guide will walk you through account creation at the right time, once your `.env` file is already open and ready to fill in.
 
 > *Note: Some links below are affiliate links. Using them helps support the continued open-source development of IsaInvestClaw at no extra cost to you.*
 
-You will need accounts and API keys from three services. Follow the steps below for each one before moving on to the Quick Start guide.
-
----
-
-#### 🏦 Trading 212 — Free UK Stocks ISA with API Access
-
-1. Click the affiliate link to sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
-2. Complete the registration form and verify your identity as prompted
-3. When asked to choose an account type, select **Stocks ISA**
-4. Once your account is open, tap **Add Funds** and make a deposit of at least **£1**
-
-   > ⚠️ **This deposit is required.** The API (Beta) option will not appear in your settings until your ISA account has been funded at least once.
-
-5. Go to **Settings** (the gear icon, bottom-right)
-6. Scroll down and tap **API (Beta)**
-7. Tap **Generate API Key** — Trading 212 will display your **Key ID** and **Secret Key**
-8. Copy both values immediately and paste them into your `.env` file as `T212_KEY_ID` and `T212_SECRET`
-
-   > 🔒 The Secret Key is only shown once. If you lose it, you will need to revoke and regenerate the key.
-
----
-
-#### 📊 EODHD — End-of-Day Market Data & Financial News
-
-1. Click the affiliate link to sign up: **[Create EODHD Account](https://eodhd.com?via=clementha)**
-2. Complete the registration form and verify your email address
-3. Once logged in, go to your **Dashboard**
-4. Your API key is shown at the top of the Dashboard under **Your API Token**
-5. Click **Copy** and paste the key into your `.env` file as `EODHD_API_KEY`
-
-   > ℹ️ **Free tier:** EODHD's free plan includes **20 API calls per day**. Each stock price lookup consumes 1 call, and each news fetch consumes 5 calls. This is sufficient for light users tracking a small number of stocks with twice-daily runs — but if you add many holdings or increase your run frequency, consider upgrading to a paid plan.
-
----
-
-#### 🤖 Novita AI — LLM Provider (the Bot's "Brain")
-
-1. Click the affiliate link to sign up: **[Create Novita AI Account](https://novita.ai/?ref=zmyynju&utm_source=affiliate)**
-2. Complete the registration form and verify your email address
-3. Go to **Billing** and add credits — a minimum of **USD $10** is recommended to get started comfortably
-
-   > ℹ️ In our experience, USD $10 is typically enough for **more than a month** of light usage (a small portfolio, twice-daily runs). Your consumption will vary depending on the number of holdings and how often you chat with the bot.
-
-4. While in Billing, set a **spending limit** to cap the maximum amount the AI can consume in a given period — this protects against unexpected costs if the bot enters an unexpected loop
-5. Go to **API Keys** (in the left sidebar or account menu)
-6. Click **Create API Key**, give it a name (e.g. `IsaInvestClaw`), and confirm
-7. Copy the generated key and paste it into your `.env` file as `LLM_API_KEY`
-
-   > 🔒 The API key is only shown once at creation. Store it securely.
+| Service | Purpose | Link |
+|---|---|---|
+| 🏦 **Trading 212** | Free UK Stocks ISA with read-only API access | [Sign up](https://www.trading212.com/invite/4DtCF9r91Ms) |
+| 📊 **EODHD** | End-of-day market data & financial news | [Sign up](https://eodhd.com?via=clementha) |
+| 🤖 **Novita AI** | LLM provider — the bot's "brain" | [Sign up](https://novita.ai/?ref=zmyynju&utm_source=affiliate) |
 
 ---
 
@@ -138,28 +99,93 @@ cd IsaInvestClaw
 
 ---
 
-### 2. Set Up Your Telegram Bot
+### 2. Create Your `.env` File
 
-1. Open Telegram and search for **@BotFather**
-2. Send the command `/newbot`, give it a name, and copy the **Bot Token** it provides
-3. To get your **Chat ID**, search for **@userinfobot** in Telegram, click Start, and copy the ID number shown
-
----
-
-### 3. Configure Your Secrets (`.env` file)
-
-1. Open the `IsaInvestClaw` folder in **Visual Studio Code**
-2. Find the file named `.env.example`
-3. Duplicate it and rename the copy to `.env`
-4. Fill in your API keys and Telegram credentials
+Before creating any accounts, create your secrets file so it is ready to fill in as you go:
 
 ```bash
-# Shortcut — do this in Terminal:
 cp .env.example .env
 code .env
 ```
 
-Your completed `.env` should look like this:
+This opens the `.env` file in VS Code. Leave it open — you will paste your API keys into it during the next step.
+
+> 🔒 **Security Note:** Never commit your `.env` file to Git. It is already listed in `.gitignore` by default — do not remove it.
+
+---
+
+### 3. Create Your Accounts & Gather API Keys
+
+Work through each service below in order. By the end of this step, all fields in your `.env` file will be filled in.
+
+---
+
+#### 🏦 Trading 212 — Free UK Stocks ISA with API Access
+
+1. Click the affiliate link to sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
+2. Complete the registration form and verify your identity as prompted
+3. When asked to choose an account type, select **Stocks ISA**
+4. Once your account is open, tap **Add Funds** and make a deposit of at least **£1**
+
+   > ⚠️ **This deposit is required.** The API (Beta) option will not appear in your settings until your ISA account has been funded at least once.
+
+5. Go to **Settings** (the gear icon, bottom-right)
+6. Scroll down and tap **API (Beta)**
+7. Tap **Generate API Key**
+
+   > 🔒 **Critical — Read Before Generating:**
+   > When the permissions screen appears, you **MUST uncheck** the following two permissions:
+   > - ❌ **Orders — Execute** *(uncheck this)*
+   > - ❌ **Pies — Write** *(uncheck this)*
+   >
+   > IsaInvestClaw only reads your portfolio data — it never places trades. Leaving these permissions enabled means a compromised API key could place real trades on your account without your knowledge.
+
+8. Trading 212 will display your **Key ID** and **Secret Key**. Paste both values immediately into your open `.env` file:
+   ```
+   T212_KEY_ID="your_key_id_here"
+   T212_SECRET="your_secret_here"
+   ```
+   > 🔒 The Secret Key is shown **only once**. If you lose it, you must revoke and regenerate the key.
+
+---
+
+#### 📊 EODHD — End-of-Day Market Data & Financial News
+
+1. Click the affiliate link to sign up: **[Create EODHD Account](https://eodhd.com?via=clementha)**
+2. Complete the registration form and verify your email address
+3. Once logged in, go to your **Dashboard**
+4. Your API key is shown at the top of the Dashboard under **Your API Token**
+5. Click **Copy** and paste the key into your open `.env` file:
+   ```
+   EODHD_API_KEY="your_eodhd_key_here"
+   ```
+
+   > ℹ️ **Free tier:** EODHD's free plan includes **20 API calls per day**. Each stock price lookup consumes 1 call, and each news fetch consumes 5 calls. This is sufficient for light users tracking a small number of stocks with twice-daily runs — but if you add many holdings or increase your run frequency, consider upgrading to a paid plan.
+
+---
+
+#### 🤖 Novita AI — LLM Provider (the Bot's "Brain")
+
+1. Click the affiliate link to sign up: **[Create Novita AI Account](https://novita.ai/?ref=zmyynju&utm_source=affiliate)**
+2. Complete the registration form and verify your email address
+3. Go to **Billing** and add credits — a minimum of **USD $10** is recommended to get started comfortably
+
+   > ℹ️ In our experience, USD $10 is typically enough for **more than a month** of light usage (a small portfolio, twice-daily runs). Your consumption will vary depending on the number of holdings and how often you chat with the bot.
+
+4. While in Billing, set a **spending limit** to cap the maximum amount the AI can consume in a given period — this protects against unexpected costs if the bot enters an unexpected loop
+5. Go to **API Keys** (in the left sidebar or account menu)
+6. Click **Create API Key**, give it a name (e.g. `IsaInvestClaw`), and confirm
+7. Copy the generated key and paste it into your open `.env` file:
+   ```
+   LLM_API_KEY="your_novita_key_here"
+   ```
+   > 🔒 The API key is shown **only once** at creation. Store it securely.
+
+---
+
+### 4. Fill In Your `.env` File
+
+By now, all API keys should already be filled in from the previous step. Complete any remaining fields — your finished `.env` should look like this:
 
 ```env
 # --- AI Provider Settings ---
@@ -177,11 +203,22 @@ TELEGRAM_BOT_TOKEN="your_telegram_bot_token"
 TELEGRAM_CHAT_ID="your_telegram_chat_id"
 ```
 
-> 🔒 **Security Note:** Never paste your API keys into the Telegram chat. Always store them in the local `.env` file only. See the [Environment Variable Reference](#-environment-variable-reference) below.
+> The Telegram fields will be filled in the next step. See the [Environment Variable Reference](#-environment-variable-reference) for a full description of each field.
 
 ---
 
-### 4. Set Your Portfolio Targets
+### 5. Set Up Your Telegram Bot
+
+1. Open Telegram and search for **@BotFather**
+2. Send the command `/newbot`, give it a name, and copy the **Bot Token** it provides
+3. Paste the token into your `.env` file as `TELEGRAM_BOT_TOKEN`
+4. To get your **Chat ID**, search for **@userinfobot** in Telegram, click Start, and copy the ID number shown
+5. Paste the ID into your `.env` file as `TELEGRAM_CHAT_ID`
+6. Save and close the `.env` file
+
+---
+
+### 6. Set Your Portfolio Targets
 
 Copy the example portfolio config and edit it to reflect your holdings, cash reserve, and run schedule:
 
@@ -196,7 +233,7 @@ Your config file will look like this:
 {
   "isa_allowance_target": 20000,
   "target_cash_pct": 0.25,
-\  "holdings": {
+  "holdings": {
     "VOD.LSE": 0.25,
     "BT-A.LSE": 0.25,
     "NWG.LSE": 0.25
@@ -208,9 +245,7 @@ See the [Portfolio Config Reference](#-portfolio-config-reference) below for a f
 
 ---
 
-### 5. Launch the Engine
-
-> **Why this comes before pairing:** The `.env` file you configured in Step 3 is loaded by the container on startup. The bot needs your Telegram token and all API keys present before it can run — including before it can generate a pairing code. Always complete Steps 3 and 4 first.
+### 7. Launch the Engine
 
 Make sure **Docker Desktop** is open and running, then in Terminal:
 
@@ -225,7 +260,7 @@ docker compose up -d
 
 ---
 
-### 6. Pair Your Telegram Bot
+### 8. Pair Your Telegram Bot
 
 > This step is **required** before the bot will respond to anyone. OpenClaw uses a zero-trust pairing system — it ignores all messages until the owner explicitly approves a one-time pairing code. This prevents anyone who discovers your bot username from being able to issue commands to your AI.
 
@@ -250,7 +285,7 @@ docker compose up -d
 
 ---
 
-### 7. Talk to Your Bot
+### 9. Talk to Your Bot
 
 Open Telegram and message your bot. Here are some useful prompts to get started:
 
@@ -327,7 +362,7 @@ docker compose down --volumes --rmi all
 **Bot is not responding on Telegram at all**
 - Confirm that Docker is running: `docker compose ps`
 - Check logs for errors: `docker compose logs -f`
-- Ensure you completed the [pairing step](#6-pair-your-telegram-bot) — the bot will silently ignore all messages until pairing is approved
+- Ensure you completed the [pairing step](#8-pair-your-telegram-bot) — the bot will silently ignore all messages until pairing is approved
 - Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are correct in `.env`
 
 **"API Key invalid" error in logs**
@@ -369,7 +404,6 @@ Investing is part discipline, part patience — and a little bit of luck never h
 If the bot has ever saved you from a bad trade, helped you spot an opportunity, or simply kept you better organised — consider buying us a coffee. Every contribution goes directly towards new features, better models, and keeping the project open-source and free.
 
 [![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/clementha)
-
 
 > *"The stock market is a device for transferring money from the impatient to the patient."* — Warren Buffett
 
