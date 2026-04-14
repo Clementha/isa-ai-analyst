@@ -72,15 +72,7 @@ IsaInvestClaw is built with strict safety boundaries to protect both your machin
 
 ### Accounts You Will Need
 
-You will need accounts from the three services below. You do **not** need to set these up before cloning the project — the Quick Start guide will walk you through account creation at the right time, once your `.env` file is already open and ready to fill in.
-
-> *Note: Some links below are affiliate links. Using them helps support the continued open-source development of IsaInvestClaw at no extra cost to you.*
-
-| Service | Purpose | Link |
-|---|---|---|
-| 🏦 **Trading 212** | Free UK Stocks ISA with read-only API access | [Sign up](https://www.trading212.com/invite/4DtCF9r91Ms) |
-| 📊 **EODHD** | End-of-day market data & financial news | [Sign up](https://eodhd.com?via=clementha) |
-| 🤖 **Novita AI** | LLM provider — the bot's "brain" | [Sign up](https://novita.ai/?ref=zmyynju&utm_source=affiliate) |
+You will need accounts with **Trading 212**, **EODHD**, and **Novita AI**. Do not create them yet — [Step 3](#3-create-your-accounts--gather-api-keys) of the Quick Start guide will walk you through each one in the right order, once your `.env` file is already open and ready to receive the keys.
 
 ---
 
@@ -118,6 +110,8 @@ This opens the `.env` file in VS Code. Leave it open — you will paste your API
 
 Work through each service below in order. By the end of this step, all fields in your `.env` file will be filled in.
 
+> *Note: Some links below are affiliate links. Using them helps support the continued open-source development of IsaInvestClaw at no extra cost to you.*
+
 ---
 
 #### 🏦 Trading 212 — Free UK Stocks ISA with API Access
@@ -141,11 +135,10 @@ Work through each service below in order. By the end of this step, all fields in
    > IsaInvestClaw only reads your portfolio data — it never places trades. Leaving these permissions enabled means a compromised API key could place real trades on your account without your knowledge.
 
 8. Trading 212 will display your **Key ID** and **Secret Key**. Paste both values immediately into your open `.env` file:
-   ```
-   T212_KEY_ID="your_key_id_here"
-   T212_SECRET="your_secret_here"
-   ```
-   > 🔒 The Secret Key is shown **only once**. If you lose it, you must revoke and regenerate the key.
+T212_KEY_ID="your_key_id_here"
+T212_SECRET="your_secret_here"
+
+> 🔒 The Secret Key is shown **only once**. If you lose it, you must revoke and regenerate the key.
 
 ---
 
@@ -156,11 +149,9 @@ Work through each service below in order. By the end of this step, all fields in
 3. Once logged in, go to your **Dashboard**
 4. Your API key is shown at the top of the Dashboard under **Your API Token**
 5. Click **Copy** and paste the key into your open `.env` file:
-   ```
-   EODHD_API_KEY="your_eodhd_key_here"
-   ```
+EODHD_API_KEY="your_eodhd_key_here"
 
-   > ℹ️ **Free tier:** EODHD's free plan includes **20 API calls per day**. Each stock price lookup consumes 1 call, and each news fetch consumes 5 calls. This is sufficient for light users tracking a small number of stocks with twice-daily runs — but if you add many holdings or increase your run frequency, consider upgrading to a paid plan.
+> ℹ️ **Free tier:** EODHD's free plan includes **20 API calls per day**. Each stock price lookup consumes 1 call, and each news fetch consumes 5 calls. This is sufficient for light users tracking a small number of stocks with twice-daily runs — but if you add many holdings or increase your run frequency, consider upgrading to a paid plan.
 
 ---
 
@@ -170,16 +161,15 @@ Work through each service below in order. By the end of this step, all fields in
 2. Complete the registration form and verify your email address
 3. Go to **Billing** and add credits — a minimum of **USD $10** is recommended to get started comfortably
 
-   > ℹ️ In our experience, USD $10 is typically enough for **more than a month** of light usage (a small portfolio, twice-daily runs). Your consumption will vary depending on the number of holdings and how often you chat with the bot.
+> ℹ️ In our experience, USD $10 is typically enough for **more than a month** of light usage (a small portfolio, twice-daily runs). Your consumption will vary depending on the number of holdings and how often you chat with the bot.
 
 4. While in Billing, set a **spending limit** to cap the maximum amount the AI can consume in a given period — this protects against unexpected costs if the bot enters an unexpected loop
 5. Go to **API Keys** (in the left sidebar or account menu)
 6. Click **Create API Key**, give it a name (e.g. `IsaInvestClaw`), and confirm
 7. Copy the generated key and paste it into your open `.env` file:
-   ```
-   LLM_API_KEY="your_novita_key_here"
-   ```
-   > 🔒 The API key is shown **only once** at creation. Store it securely.
+LLM_API_KEY="your_novita_key_here"
+
+> 🔒 The API key is shown **only once** at creation. Store it securely.
 
 ---
 
@@ -231,13 +221,13 @@ Your config file will look like this:
 
 ```json
 {
-  "isa_allowance_target": 20000,
-  "target_cash_pct": 0.25,
-  "holdings": {
-    "VOD.LSE": 0.25,
-    "BT-A.LSE": 0.25,
-    "NWG.LSE": 0.25
-  }
+"isa_allowance_target": 20000,
+"target_cash_pct": 0.25,
+"holdings": {
+ "VOD.LSE": 0.25,
+ "BT-A.LSE": 0.25,
+ "NWG.LSE": 0.25
+}
 }
 ```
 
@@ -270,15 +260,15 @@ docker compose up -d
 2. Open Telegram and search for your bot by the username you set in @BotFather (e.g. `@MyIsaClawBot`)
 3. Send any message — `hello` is fine
 4. The bot replies with a short alphanumeric pairing code, for example:
-   ```
-   Your pairing code is: Z2EDQKMK
-   Approve this code to continue.
-   ```
+Your pairing code is: Z2EDQKMK
+Approve this code to continue.
+
+text
 5. Copy that code, go back to your **Terminal**, and run:
-   ```bash
-   docker compose run --rm openclaw-cli pairing approve telegram Z2EDQKMK
-   ```
-   *(Replace `Z2EDQKMK` with the actual code the bot sent you)*
+```bash
+docker compose run --rm openclaw-cli pairing approve telegram Z2EDQKMK
+```
+*(Replace `Z2EDQKMK` with the actual code the bot sent you)*
 6. The bot confirms the connection — you're ready to go
 
 > ⚠️ **Note:** You may need to repeat this pairing step if you restart the container or change your bot token. If the bot keeps generating a new pairing code on every message without accepting the approval, check the [Troubleshooting](#-troubleshooting) section below.
@@ -300,8 +290,6 @@ Open Telegram and message your bot. Here are some useful prompts to get started:
 
 ## 🔑 Environment Variable Reference
 
-Full reference for all variables in your `.env` file:
-
 | Variable | Required | Description |
 |---|---|---|
 | `LLM_BASE_URL` | ✅ | The OpenAI-compatible endpoint for your LLM provider |
@@ -316,8 +304,6 @@ Full reference for all variables in your `.env` file:
 ---
 
 ## 📊 Portfolio Config Reference
-
-Full reference for all fields in `app/portfolio_targets.json`:
 
 | Field | Type | Description |
 |---|---|---|
