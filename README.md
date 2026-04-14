@@ -368,8 +368,8 @@ Investing is part discipline, part patience — and a little bit of luck never h
 
 If the bot has ever saved you from a bad trade, helped you spot an opportunity, or simply kept you better organised — consider buying us a coffee. Every contribution goes directly towards new features, better models, and keeping the project open-source and free.
 
-[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/yourusername)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a-Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/yourusername)
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/clementha)
+
 
 > *"The stock market is a device for transferring money from the impatient to the patient."* — Warren Buffett
 
