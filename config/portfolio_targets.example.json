@@ -1,12 +1,9 @@
 {
   "isa_allowance_target": 20000,
   "target_cash_pct": 0.25,
-  "run_times": ["10:30", "22:30"],
   "holdings": {
-    "VOD.LSE": 0.15,
-    "BT-A.LSE": 0.15,
-    "NWG.LSE": 0.15,
-    "LLOY.LSE": 0.15,
-    "LGEN.LSE": 0.15
+    "VOD.LSE": 0.25,
+    "BT-A.LSE": 0.25,
+    "NWG.LSE": 0.25
   }
 }

@@ -422,7 +422,6 @@ docker compose down --volumes --rmi all
 
 **Reports not arriving at scheduled times**
 - Confirm your system clock and timezone are correct (the bot uses your Docker host's time)
-- Check your `run_times` values in `app/portfolio_targets.json` are in UK local time (UTC+1 during BST)
 - Test immediately with `Run it now.` in the Telegram chat
 
 **Docker Desktop won't start on Apple Silicon**
