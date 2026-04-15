@@ -1,9 +1,16 @@
 {
   "isa_allowance_target": 20000,
-  "target_cash_pct": 0.25,
+  "target_cash_pct": 0.50,
   "holdings": {
-    "VOD.LSE": 0.25,
-    "BT-A.LSE": 0.25,
-    "NWG.LSE": 0.25
+    "VOD_LSE_EQ": {
+      "eodhd_ticker": "VOD.LSE",
+      "name": "Vodafone Group PLC",
+      "target_weight": 0.25
+    },
+    "BARC_LSE_EQ": {
+      "eodhd_ticker": "BARC.LSE",
+      "name": "Barclays PLC",
+      "target_weight": 0.25
+    }
   }
 }

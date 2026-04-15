@@ -48,10 +48,9 @@ IsaInvestClaw is an autonomous, AI-powered quantitative analysis engine built sp
   - [C. Create Your Accounts & Gather API Keys](#c-create-your-accounts--gather-api-keys)
   - [D. Fill In Your `.env` File](#d-fill-in-your-env-file)
   - [E. Set Up Your Telegram Bot](#e-set-up-your-telegram-bot)
-  - [F. Set Portfolio Targets](#f-set-your-portfolio-targets)
-  - [G. Launch the Engine](#g-launch-the-engine)
-  - [H. Pair Your Telegram Bot](#h-pair-your-telegram-bot)
-  - [I. Talk to Your Bot](#i-talk-to-your-bot)
+  - [F. Launch the Engine](#g-launch-the-engine)
+  - [G. Pair Your Telegram Bot](#h-pair-your-telegram-bot)
+  - [H. Talk to Your Bot](#i-talk-to-your-bot)
 - [Environment Variable Reference](#-environment-variable-reference)
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Updating & Maintenance](#-updating--maintenance)
@@ -253,36 +252,7 @@ TELEGRAM_CHAT_ID="your_telegram_chat_id"
 
 ---
 
-### F. Set Your Portfolio Targets
-
-This is the most important configuration step — it tells IsaInvestClaw **what to analyse**. You will define which UK stocks to track, how much of your portfolio each should represent, how much cash to hold in reserve, and your total ISA allowance for the year. The bot compares your actual Trading 212 holdings against these targets at every run and builds its report around the gaps.
-
-Copy the example config and open it in VS Code:
-
-```bash
-cp config/portfolio_targets.example.json app/portfolio_targets.json
-code app/portfolio_targets.json
-```
-
-Your config file will look like this:
-
-```json
-{
-  "isa_allowance_target": 20000,
-  "target_cash_pct": 0.25,
-  "holdings": {
-    "VOD.LSE": 0.25,
-    "BT-A.LSE": 0.25,
-    "NWG.LSE": 0.25
-  }
-}
-```
-
-See the [Portfolio Config Reference](#-portfolio-config-reference) below for a full explanation of each field.
-
----
-
-### G. Launch the Engine
+### F. Launch the Engine
 
 Make sure **Docker Desktop** is open and running, then in Terminal:
 
@@ -297,7 +267,7 @@ docker compose up -d
 
 ---
 
-### H. Pair Your Telegram Bot
+### G. Pair Your Telegram Bot
 
 > This step is **required** before the bot will respond to anyone. OpenClaw uses a zero-trust pairing system — it ignores all messages until the owner explicitly approves a one-time pairing code. This prevents anyone who discovers your bot username from being able to issue commands to your AI.
 
@@ -322,7 +292,7 @@ docker compose run --rm openclaw-cli pairing approve telegram Z2EDQKMK
 
 ---
 
-### I. Talk to Your Bot
+### H. Talk to Your Bot
 
 Open Telegram and message your bot. Here are some useful prompts to get started:
 
@@ -372,7 +342,7 @@ If you found IsaInvestClaw useful, please consider [⭐ starring the repository]
 |---|---|---|
 | `isa_allowance_target` | `number` | Your total ISA allowance for the tax year in GBP (e.g. `20000`) |
 | `target_cash_pct` | `number` | Fraction of the portfolio to keep as cash reserve (e.g. `0.25` = 25%) |
-| `holdings` | `object` | Map of ticker symbols to target portfolio weight. Weights should sum to `1.0` minus `target_cash_pct` |
+| `holdings` | `object` | Map of T212 ticker symbols (e.g. `VOD_LSE_EQ`) to their exact EODHD mapped ticker, display name, and target weight. Weights should sum to `1.0` minus `target_cash_pct`. |
 
 > ℹ️ **Ticker format:** Use the EODHD format — `SYMBOL.EXCHANGE` (e.g. `VOD.LSE` for Vodafone on the London Stock Exchange).
 

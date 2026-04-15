@@ -133,21 +133,27 @@ def fetch_t212_portfolio():
 # --- THE MATH ENGINE ---
 total_value, current_positions = fetch_t212_portfolio()
 
-# 1. Create a massive string to hold the entire report instead of just printing it
+# 1. Create a massive string to hold the entire report
 report_content = "=== 📊 DAILY PORTFOLIO REPORT ===\n\n"
 report_content += f"Total Value: £{total_value:.2f}\n"
 report_content += f"Target Cash: {TARGET_CASH_PCT * 100:.1f}%\n\n"
 report_content += "-" * 30 + "\n\n"
 
-for symbol, target_pct in TARGET_WEIGHTS.items():
-    base_ticker = symbol.split('.')[0] 
-    current_value = next((val for t212_ticker, val in current_positions.items() if base_ticker in t212_ticker), 0)
+# UPDATED: Iterate through the new nested JSON schema
+for t212_ticker, stock_data in TARGET_WEIGHTS.items():
+    target_pct = stock_data.get("target_weight", 0)
+    eodhd_ticker = stock_data.get("eodhd_ticker", "")
+    name = stock_data.get("name", t212_ticker)
+    
+    # Fetch exact match from T212 portfolio using the explicit T212 ticker key
+    current_value = current_positions.get(t212_ticker, 0)
     
     current_pct = (current_value / total_value) * 100 if total_value > 0 else 0
     target_value = ISA_ALLOWANCE * target_pct
     delta_value = target_value - current_value
 
-    data = fetch_eodhd_data(symbol)
+    # UPDATED: Use the specific EODHD ticker for external API calls
+    data = fetch_eodhd_data(eodhd_ticker)
     if not data or len(data) < 20:
         continue
         
@@ -155,8 +161,8 @@ for symbol, target_pct in TARGET_WEIGHTS.items():
     latest = closes[-1]
     prev = closes[-2]
     
-    # Fetch the news immediately so we can grade it
-    recent_news = fetch_news(symbol)
+    # Fetch news using the EODHD ticker
+    recent_news = fetch_news(eodhd_ticker)
     if not recent_news:
         recent_news = ["No recent news found."]
     
@@ -164,24 +170,23 @@ for symbol, target_pct in TARGET_WEIGHTS.items():
     sma_pass = latest > statistics.mean(closes)
     vol_pass = abs((latest - prev) / prev) * 100 < 5.0
     
-    # Let the AI model read the news
-    news_sentiment = analyse_news_with_AI_model(symbol, recent_news)
+    # Pass the readable name and news to the AI
+    news_sentiment = analyse_news_with_AI_model(name, recent_news)
     
     if news_sentiment == "NO_NEWS":
-        news_pass = True  # Don't block a trade just because it's quiet
+        news_pass = True
         news_icon = "🤷‍♂️"
     elif news_sentiment == "FAIL":
         news_pass = False
         news_icon = "👎"
     elif news_sentiment == "ERROR":
-        news_pass = False # FAIL-SECURE: Block the trade if the AI is broken/misconfigured
+        news_pass = False 
         news_icon = "⚠️"
     else:
         news_pass = True
         news_icon = "👍"
     
     # --- 2. GENERATE TRADING SIGNAL ---
-    # Now requires ALL THREE gates to pass
     if sma_pass and vol_pass and news_pass:
         signal_color = "🟢 GREEN" 
         if delta_value > 50:
@@ -195,12 +200,12 @@ for symbol, target_pct in TARGET_WEIGHTS.items():
         else:
             action = "AVOID"
 
-    # --- 3. FORMAT THE ICONS ---
     sma_icon = "👍" if sma_pass else "👎"
     vol_icon = "👍" if vol_pass else "👎"
 
     # --- 4. BUILD THE REPORT TEXT ---
-    report_content += f"🔹 <b>{symbol}</b> | Price: {latest:.2f}\n"
+    # UPDATED: Display Name and both tickers for clarity
+    report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Price: {latest:.2f}\n"
     report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
     report_content += f"Signal: {signal_color} [{action}]\n"
     report_content += f"Gates: SMA {sma_icon} | News {news_icon} | Volatility {vol_icon}\n"
@@ -208,7 +213,8 @@ for symbol, target_pct in TARGET_WEIGHTS.items():
     report_content += "Catalysts:\n"
     for item in recent_news:
         report_content += f" - {item}\n"
-    report_content += "\n" # Spacer
+    report_content += "\n"
+
 
 # --- ADD THE LEAN DISCLAIMER ---
 disclaimer_text = """---
