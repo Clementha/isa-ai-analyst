@@ -9,6 +9,6 @@ __pycache__/
 
 # Ignore OpenClaw's auto-generated local hidden folder (if it's still lying around)
 .openclaw/
-
+openclaw_data/
 # Ignore Mac system files
 .DS_Store

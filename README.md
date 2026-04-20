@@ -259,11 +259,25 @@ Make sure **Docker Desktop** is open and running, then in Terminal:
 ```bash
 docker compose up -d
 ```
+*(The `-d` flag runs the engine quietly in the background.)*
 
-> The `-d` flag runs the engine quietly in the background. To view live logs, run:
+**Verify the Launch (Health Check)**
+To ensure the engine started successfully before moving to the next step, run:
+
+```bash
+docker ps
+```
+
+If you see `openclaw_invest_bot` in the list with a status of **Up**, the launch was successful!
+
+> **Optional: Watch the Engine Start**
+> If you want a peek behind the curtain to see what the bot is doing, run:
+> 
 > ```bash
 > docker compose logs -f
 > ```
+> 
+> *(Don't worry if the output looks like the Matrix or shows minor installation warnings on the first run—this is completely normal while it downloads its dependencies! You can press `Ctrl+C` to exit the log view at any time.)*
 
 ---
 
@@ -273,19 +287,23 @@ docker compose up -d
 
 **Here's how it works:**
 
-1. Make sure your container is running (`docker compose up -d`)
+1. Ensure your container is still running from Step F.
 2. Open Telegram and search for your bot by the username you set in @BotFather (e.g. `@MyIsaClawBot`)
 3. Send any message — `hello` is fine
 4. The bot replies with a short alphanumeric pairing code, for example:
+```env
 Your pairing code is: Z2EDQKMK
 Approve this code to continue.
+```
 
-text
 5. Copy that code, go back to your **Terminal**, and run:
 ```bash
-docker compose run --rm openclaw-cli pairing approve telegram Z2EDQKMK
+docker exec -it isa_invest_claw openclaw pairing approve telegram Z2EDQKMK
 ```
 *(Replace `Z2EDQKMK` with the actual code the bot sent you)*
+If successful, your terminal will output a confirmation message similar to:
+Approved telegram sender "123456789" (with your actual Telegram Chat ID).
+
 6. The bot confirms the connection — you're ready to go
 
 > ⚠️ **Note:** You may need to repeat this pairing step if you restart the container or change your bot token. If the bot keeps generating a new pairing code on every message without accepting the approval, check the [Troubleshooting](#-troubleshooting) section below.
@@ -342,9 +360,9 @@ If you found IsaInvestClaw useful, please consider [⭐ starring the repository]
 |---|---|---|
 | `isa_allowance_target` | `number` | Your total ISA allowance for the tax year in GBP (e.g. `20000`) |
 | `target_cash_pct` | `number` | Fraction of the portfolio to keep as cash reserve (e.g. `0.25` = 25%) |
-| `holdings` | `object` | Map of T212 ticker symbols (e.g. `VOD_LSE_EQ`) to their exact EODHD mapped ticker, display name, and target weight. Weights should sum to `1.0` minus `target_cash_pct`. |
+| `holdings` | `object` | Map of T212 ticker symbols (e.g. `VOD_LSE_EQ`) to their mapped EODHD ticker, display name, and target weight. Weights should sum to `1.0` minus `target_cash_pct`. |
 
-> ℹ️ **Ticker format:** Use the EODHD format — `SYMBOL.EXCHANGE` (e.g. `VOD.LSE` for Vodafone on the London Stock Exchange).
+> ℹ️ **Note on Tickers:** You do not need to configure these manually. When you chat with the bot to add a stock, its internal engine automatically queries and maps the correct Trading 212 and EODHD identifiers for you.
 
 ---
 

@@ -55,7 +55,11 @@ You have [Y]% unallocated ([Z]% reserved for cash).
 Want to allocate the rest or run a report now?"
 
 # SCHEDULING & AUTOMATION
-If the user asks to schedule reports, use your file-writing tool to OVERWRITE `/root/.openclaw/workspace/HEARTBEAT.md` with this exact template:
+If the user asks "What is my schedule?", "When are my reports?", or asks about reporting times:
+1. Read the file `/root/.openclaw/workspace/HEARTBEAT.md`.
+2. Reply by listing the exact times and actions found in that file.
+
+If the user asks to change the schedule, add a new report, or update times, use your file-writing tool to OVERWRITE `/root/.openclaw/workspace/HEARTBEAT.md` with this exact template:
 # HEARTBEAT.md - Daily Reports
 ## [TIME 1] - Portfolio Check
 - Check Portfolio
