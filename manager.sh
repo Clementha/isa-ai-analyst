@@ -173,6 +173,11 @@ run_setup() {
     echo -e "\n🐳 Booting Docker Container to build dependencies..."
     source .env
     
+    echo "🧠 Pre-loading AI Agent Brain (Workspace files)..."
+    # CREATE WORKSPACE AND COPY FILES BEFORE DOCKER BOOTS
+    mkdir -p openclaw_data/workspace
+    cp config/*.md openclaw_data/workspace/ 2>/dev/null || true
+    
     # 1. Boot up naturally
     docker compose up -d > /dev/null 2>&1
     

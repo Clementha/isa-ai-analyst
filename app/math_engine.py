@@ -48,14 +48,15 @@ try:
         config = json.load(f)
         TARGET_WEIGHTS = config.get("holdings", {})
         TARGET_CASH_PCT = config.get("target_cash_pct", 0.25)
-        # Add this new line to pull the £20k target:
-        ISA_ALLOWANCE = config.get("isa_allowance_target", 20000) 
+        ISA_ALLOWANCE = config.get("isa_allowance_target", 20000)
+        DAILY_DCA_LIMIT = config.get("daily_dca_limit", 500) 
 except Exception as e:
     print(f"❌ Failed to load {CONFIG_PATH}. Error: {e}")
     TARGET_WEIGHTS = {}
     TARGET_CASH_PCT = 0.25
     ISA_ALLOWANCE = 20000
-
+    DAILY_DCA_LIMIT = 500
+    
 # --- DATA FETCHING ---
 def fetch_eodhd_data(symbol):
     url = f"https://eodhd.com/api/eod/{symbol}?api_token={EODHD_API_KEY}&fmt=json&period=d"
@@ -90,11 +91,10 @@ def analyse_news_with_AI_model(symbol, news_list):
     
     prompt = f"You are a strict quantitative risk manager. Review these recent headlines for {symbol}. If they contain severe fundamental risks (fraud, lawsuits, bankruptcy, major downgrades), reply with the exact word 'FAIL'. If they are neutral, positive, or standard market noise, reply with the exact word 'PASS'.\n\nHeadlines:\n" + "\n".join(news_list)
     
+    actual_model = LLM_MODEL.replace("openrouter/", "")
     payload = {
-        "model": LLM_MODEL, 
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.0, 
-        "max_tokens": 10
+        "model": actual_model, 
+        "messages": [{"role": "user", "content": prompt}]
     }
     
     try:
@@ -186,11 +186,17 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         news_pass = True
         news_icon = "👍"
     
-    # --- 2. GENERATE TRADING SIGNAL ---
+# --- 2. GENERATE TRADING SIGNAL ---
     if sma_pass and vol_pass and news_pass:
         signal_color = "🟢 GREEN" 
         if delta_value > 50:
-            action = f"BUY £{delta_value:.2f}"
+            # DCA Logic: Take the smaller of the two numbers
+            buy_amount = min(delta_value, DAILY_DCA_LIMIT)
+            
+            if buy_amount < delta_value:
+                action = f"BUY £{buy_amount:.2f} (DCA mode, £{delta_value:.2f} total gap)"
+            else:
+                action = f"BUY £{buy_amount:.2f}"
         else:
             action = "HOLD (Near target)"
     else:
