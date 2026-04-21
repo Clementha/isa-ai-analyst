@@ -1,7 +1,7 @@
 services:
-  isa_invest_claw_agent:
+  isa_ai_analyst:
     image: node:22-slim
-    container_name: isa_invest_claw
+    container_name: isa_ai_analyst
     env_file:
       - .env
     restart: unless-stopped

@@ -13,12 +13,12 @@ DEFAULT_LLM_MODEL="openrouter/x-ai/grok-4.1-fast"
 show_menu() {
     clear
     echo "================================================="
-    echo "🤖 ISA INVEST AI AGENT - MANAGER"
+    echo "🤖 ISA AI ANALYST - SETUP"
     echo "================================================="
     
     # 1. Check Docker Status
     AGENT_RUNNING=false
-    if [ "$(docker ps -q -f name=isa_invest_claw)" ]; then
+    if [ "$(docker ps -q -f name=isa_ai_analyst)" ]; then
         AGENT_RUNNING=true
         echo "Status: 🟢 RUNNING"
     else
@@ -185,7 +185,7 @@ run_setup() {
     echo -e "${GREY}Please wait, do not close the terminal...${RESET}"
     
     while true; do
-        if docker logs isa_invest_claw 2>&1 | grep -q "starting provider"; then
+        if docker logs isa_ai_analyst 2>&1 | grep -q "starting provider"; then
             break
         fi
         sleep 2
@@ -193,7 +193,7 @@ run_setup() {
     
     echo "🧠 Configuring AI Model via Official CLI..."
     # 2. THE NATIVE FIX: We let OpenClaw's own CLI safely write the model to openclaw.json
-    docker exec isa_invest_claw openclaw config set agents.defaults.model.primary "$DEFAULT_LLM_MODEL" > /dev/null 2>&1
+    docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "$DEFAULT_LLM_MODEL" > /dev/null 2>&1
     
     echo "💉 Safely injecting API Keys..."
     # 3. Auth profiles are perfectly fine to manually inject
@@ -234,8 +234,8 @@ pair_telegram() {
     read -p "Enter the pairing code sent to your Telegram (or press Enter to cancel): " pairing_code
     if [ -z "$pairing_code" ]; then echo "⚠️  Cancelled."; sleep 1.5; return; fi
     
-    echo "🔗 Sending approval to OpenClaw..."
-    docker exec -it isa_invest_claw openclaw pairing approve telegram "$pairing_code"
+    echo "🔗 Sending pairingapproval to Telegram..."
+    docker exec -it isa_ai_analyst openclaw pairing approve telegram "$pairing_code"
     read -p "Press Enter to return to menu..."
 }
 
