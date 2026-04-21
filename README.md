@@ -117,7 +117,12 @@ You only need two things installed before starting:
 1. **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** — runs the analyst in its secure container
 2. **[Telegram](https://telegram.org/)** — download on your phone (and desktop if you prefer) to receive reports and chat with the analyst
 
-That's it. The `setup.sh` script handles all configuration — no code editor required.
+That's it. The setup script handles all configuration — no code editor required.
+
+| Platform | Setup Script | How to Run |
+|---|---|---|
+| macOS | `setup.sh` | `bash setup.sh` in Terminal |
+| Windows | `setup.bat` | Double-click `setup.bat`, or run it in PowerShell / Command Prompt |
 
 ---
 
@@ -125,14 +130,14 @@ That's it. The `setup.sh` script handles all configuration — no code editor re
 
 ### A. Clone the Repository
 
-Open **Terminal** (macOS) or **PowerShell** (Windows) and run:
+Open **Terminal** (macOS) or **PowerShell** / **Command Prompt** (Windows) and run:
 
 ```bash
 git clone https://github.com/ClementHa/isa-ai-analyst.git
 cd isa-ai-analyst
 ```
 
-> **Windows users:** Install [Git for Windows](https://git-scm.com/download/win) and [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) (requires WSL2) first. All subsequent commands are identical.
+> **Windows users:** Install [Git for Windows](https://git-scm.com/download/win) and [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) (requires WSL2) first, then run the commands above in **PowerShell** or **Command Prompt**.
 
 ---
 
@@ -208,31 +213,38 @@ OpenRouter gives you access to many AI models through a single API, including po
 
 Make sure **Docker Desktop is open and running**, then launch the interactive setup menu:
 
+**macOS — Terminal:**
 ```bash
 bash setup.sh
 ```
+
+**Windows — PowerShell or Command Prompt:**
+```bat
+setup.bat
+```
+Or simply **double-click `setup.bat`** in File Explorer.
 
 You will see this interface:
 
 ```
 =================================================
-🤖 ISA AI ANALYST - SETUP
+ ISA AI ANALYST - SETUP
 =================================================
-Status: 🔴 STOPPED / NOT INSTALLED
+ Status: [STOPPED / NOT INSTALLED]
 -------------------------------------------------
  SETUP CHECKLIST:
- 1) [ ] 🧠 Set AI API Key (OpenRouter)
- 2) [ ] 💰 Set Broker API Keys (Trading 212)
- 3) [ ] 👁️ Set Market Data API Key (EODHD)
- 4) [ ] 💬 Set Telegram API Keys
- 5) [ ] 🛠️ Run Initial Setup  (Complete keys first)
+  1) [ ]  Set AI API Key (OpenRouter)
+  2) [ ]  Set Broker API Keys (Trading 212)
+  3) [ ]  Set Market Data API Key (EODHD)
+  4) [ ]  Set Telegram API Keys
+  5) [ ]  Run Initial Setup  (Complete keys first)
 -------------------------------------------------
  CONTROLS:
- 6) 🚀 Start Agent            (Run Setup first)
- 7) 🛑 Stop Agent             (Run Setup first)
- 8) 📋 View Live Logs         (Run Setup first)
- 9) 🔑 Approve Telegram Pairing (Agent must be running)
- 0) ❌ Exit
+  6)  Start Agent              (Run Setup first)
+  7)  Stop Agent               (Run Setup first)
+  8)  View Live Logs           (Run Setup first)
+  9)  Approve Telegram Pairing (Agent must be running)
+  0)  Exit
 =================================================
 Enter choice [0-9]:
 ```
@@ -243,28 +255,28 @@ Once complete, the menu updates to show all items ticked and the agent running:
 
 ```
 =================================================
-🤖 ISA AI ANALYST - SETUP
+ ISA AI ANALYST - SETUP
 =================================================
-Status: 🟢 RUNNING
+ Status: [RUNNING]
 -------------------------------------------------
  SETUP CHECKLIST:
- 1) [✓] 🧠 Set AI API Key (OpenRouter)
- 2) [✓] 💰 Set Broker API Keys (Trading 212)
- 3) [✓] 👁️ Set Market Data API Key (EODHD)
- 4) [✓] 💬 Set Telegram API Keys
- 5) [✓] 🛠️ Run Initial Setup
+  1) [OK]  Set AI API Key (OpenRouter)
+  2) [OK]  Set Broker API Keys (Trading 212)
+  3) [OK]  Set Market Data API Key (EODHD)
+  4) [OK]  Set Telegram API Keys
+  5) [OK]  Run Initial Setup
 -------------------------------------------------
  CONTROLS:
- 6) 🚀 Start Agent
- 7) 🛑 Stop Agent
- 8) 📋 View Live Logs
- 9) 🔑 Approve Telegram Pairing
- 0) ❌ Exit
+  6)  Start Agent
+  7)  Stop Agent
+  8)  View Live Logs
+  9)  Approve Telegram Pairing
+  0)  Exit
 =================================================
 Enter choice [0-9]:
 ```
 
-> 💡 You can return to `bash setup.sh` at any time to start, stop, view logs, or update your API keys.
+> 💡 You can return to the setup script at any time to start, stop, view logs, or update your API keys.
 
 ---
 
@@ -365,7 +377,7 @@ You do not need to edit this file manually. The analyst manages it for you via T
 
 ## 🔑 Environment Variable Reference
 
-All variables are set via the Setup TUI — this table is for reference only.
+All variables are set via the setup script — this table is for reference only.
 
 | Variable | Required | Description |
 |---|---|---|
@@ -393,11 +405,10 @@ docker compose up -d --build
 
 To stop the analyst without removing configuration:
 
-```bash
-bash setup.sh   # Select option 7 — Stop Agent
-```
+- **macOS:** `bash setup.sh` and select option 7
+- **Windows:** Run `setup.bat` and select option 7
 
-Or directly:
+Or directly from any terminal:
 
 ```bash
 docker compose stop
@@ -419,12 +430,12 @@ docker compose down --volumes --rmi all
 
 **Bot not responding on Telegram**
 - Confirm Docker is running: `docker compose ps`
-- Check logs via the Setup TUI (option 8) or `docker compose logs -f`
+- Check logs via the setup script (option 8) or `docker compose logs -f`
 - Confirm you completed the pairing step — the bot silently ignores all messages until paired
-- Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are correct (re-run option 4 in the TUI)
+- Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are correct (re-run option 4 in the setup script)
 
 **"API Key invalid" error in logs**
-- Re-run the relevant step in the Setup TUI and re-paste the key
+- Re-run the relevant step in the setup script and re-paste the key
 - Check your EODHD subscription is active
 - Confirm both `T212_KEY_ID` and `T212_SECRET` are filled — both are required
 - If your T212 key stopped working, verify your ISA account still has funds
@@ -439,6 +450,9 @@ docker compose down --volumes --rmi all
 **Docker Desktop won't start on Windows**
 - Run `wsl --install` in PowerShell (as Administrator), then restart
 - Enable WSL2 integration: Docker Desktop → Settings → Resources → WSL Integration
+
+**`setup.bat` closes immediately on Windows**
+- Right-click `setup.bat` and choose **Run as Administrator**, or open a Command Prompt first and run `setup.bat` from within it so the window stays open if an error occurs
 
 ---
 
