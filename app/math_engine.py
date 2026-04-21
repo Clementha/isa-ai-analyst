@@ -223,9 +223,7 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
 
 
 # --- ADD THE LEAN DISCLAIMER ---
-disclaimer_text = """---
-⚠️ <b>DISCLAIMER:</b> This report is AI-generated and may contain errors or hallucinations. Always verify financial data and news with official sources before trading. Never share sensitive data or passwords in this chat.
-"""
+disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
 report_content += disclaimer_text
 # -------------------------------
 
