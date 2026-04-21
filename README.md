@@ -2,9 +2,9 @@
 
 > **Capital preservation is the primary directive.**
 
-ISA AI Analyst is an autonomous, AI-powered **investment analyst** built specifically for **UK Tax-Free ISA accounts**. It does not place trades. Instead, it acts as a tireless, emotionless second opinion — analysing your portfolio daily, screening financial news for risk, and delivering clear, data-driven recommendations directly to your Telegram so you can make better-informed decisions with confidence.
+ISA AI Analyst is an autonomous, AI-powered **investment analyst** built specifically for **UK Tax-Free ISA accounts**. Think of it as a helpful data assistant that works quietly in the background — analysing your portfolio every day, screening financial news for risk, and delivering clear, data-driven insights directly to your Telegram so you can make better-informed investment decisions without spending hours researching.
 
-The bot is designed to counteract the two biggest enemies of the retail investor: **emotional decision-making** (panic-selling on bad news, chasing momentum) and **information overload** (not having time to read the news on every stock you hold). ISA AI Analyst handles both, so you only act when the data says it makes sense to.
+The bot is designed to address two of the biggest challenges for retail investors: **emotional decision-making** (panic-selling on bad news, chasing momentum) and **information overload** (not having time to read the news on every stock you hold). ISA AI Analyst handles both, so you only act when the data says it makes sense to.
 
 Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on your own machine inside a secure Docker container.
 
@@ -27,23 +27,23 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 ## 🧠 Investment Strategy
 
-ISA AI Analyst applies two well-established, conservative investment strategies automatically on every run.
+ISA AI Analyst applies two well-established, conservative investment strategies automatically on every report.
 
 ### The 3 Safety Gates
 
-Before issuing any BUY recommendation, the analyst requires a stock to pass **three independent checks** simultaneously. If any gate fails, no action is recommended — regardless of how attractive the price looks. Each gate is a standard technique in quantitative portfolio management:
+Before issuing any BUY recommendation, the analyst requires a stock to pass **three independent checks** simultaneously. If any gate fails, no action is recommended — regardless of how attractive the price looks.
 
 | Gate | Check | Why It Matters |
 |---|---|---|
-| **Gate 1 — Trend** | Current price must be above the Simple Moving Average (SMA) | Avoids buying into a confirmed downtrend — one of the most widely-used trend filters in systematic investing |
-| **Gate 2 — Volatility** | Daily volatility must be strictly under 5% | Avoids entering during high-turbulence periods where price swings are driven by noise rather than fundamentals |
-| **Gate 3 — News** | AI scans recent headlines and blocks entry if severe fundamental risks are detected (fraud, lawsuits, profit warnings, regulatory action) | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
+| **Trend** | Current price must be above the Simple Moving Average (SMA) | Avoids buying into a confirmed downtrend |
+| **Volatility** | Daily volatility must be strictly under 5% | Avoids entering during high-turbulence periods where price swings are driven by noise rather than fundamentals |
+| **News** | AI scans recent headlines and blocks entry if severe fundamental risks are detected (fraud, lawsuits, profit warnings, regulatory action) | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
 
 All three gates must be green simultaneously. One red gate = no recommendation.
 
 ### Dollar-Cost Averaging (DCA)
 
-Rather than deploying capital in a single lump sum, ISA AI Analyst scales into positions gradually up to a configurable **daily DCA limit** (e.g. £500/day). This is a time-tested strategy — first formalised by Benjamin Graham in 1949 and recommended today by Vanguard, Charles Schwab, and most major investment platforms — that smooths out the impact of short-term price volatility and removes the pressure of trying to time the perfect entry point.
+Rather than deploying capital in a single lump sum, ISA AI Analyst scales into positions gradually up to a configurable **daily DCA limit** (e.g. £500/day). This smooths out the impact of short-term price volatility and removes the pressure of trying to time the perfect entry point.
 
 ---
 
@@ -71,7 +71,7 @@ Rather than deploying capital in a single lump sum, ISA AI Analyst scales into p
 
 ## 🔍 How It Works
 
-At each scheduled run (default: 10:30 & 22:30 UK time), ISA AI Analyst:
+At each scheduled report (default: 08:30 & 16:00 UK time), ISA AI Analyst:
 
 1. **Reads your portfolio targets** — the stocks you want to hold and at what allocations
 2. **Fetches live market data** from EODHD for every stock in your watchlist
@@ -87,7 +87,7 @@ You can also chat with the analyst at any time in plain English to update your p
 
 | Feature | Description |
 |---|---|
-| 🤖 **100% Autonomous** | Runs automatically at configurable times (default: 10:30 & 22:30 UK time) |
+| 🤖 **100% Autonomous** | Runs automatically at configurable times (default: 08:30 & 16:00 UK time) |
 | 🛡️ **3-Gate Safety Filter** | Every BUY signal must pass trend, volatility, and AI news checks before being recommended |
 | 📉 **DCA Engine** | Scales into positions gradually up to a daily limit — no lump-sum exposure |
 | 📰 **AI News Risk Manager** | Scans daily headlines and blocks recommendations if severe fundamental risks are detected |
@@ -192,7 +192,7 @@ OpenRouter gives you access to many AI models through a single API, including po
 <!-- SCREENSHOT: EODHD dashboard showing the API token field highlighted at the top -->
 <img src="docs/screenshots/eodhd-api-token.png" alt="EODHD dashboard API token location" width="600" />
 
-> ℹ️ **Free tier:** 20 API calls/day — sufficient for a small portfolio with twice-daily runs. Upgrade if you track many stocks or increase run frequency.
+> ℹ️ **Free tier:** 20 API calls/day — sufficient for a small portfolio with twice-daily reports. Upgrade if you track many stocks or increase report frequency.
 
 ---
 
@@ -312,9 +312,23 @@ Congratulations — ISA AI Analyst is now fully up and running. Here's what you 
 - ✅ AI-powered financial news risk screening before every recommendation
 - ✅ Full natural language portfolio management via Telegram
 
-Your first scheduled report arrives at the next run time (default: 10:30 or 22:30 UK). Can't wait? Send **`Run it now.`** on Telegram for an immediate report.
+Your first scheduled report arrives at the next run time (default: 08:30 or 16:00 UK). Can't wait? Send **`Run it now.`** on Telegram for an immediate report.
 
 If you find ISA AI Analyst useful, please consider [⭐ starring the repository](https://github.com/ClementHa/isa-ai-analyst) — it helps others discover the project and keeps development going.
+
+---
+
+## 🍀 Good Luck & Support the Project
+
+Investing is part discipline, part patience — and a little bit of luck never hurts. We hope ISA AI Analyst helps you make more informed, confident decisions with your ISA.
+
+If the analyst has ever kept you from a bad trade, flagged a risk you missed, or simply saved you time — consider buying us a coffee. Every contribution goes directly towards new features, better models, and keeping the project open-source and free.
+
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/clementha)
+
+> *"The stock market is a device for transferring money from the impatient to the patient."* — Warren Buffett
+
+Good luck out there. 📈
 
 ---
 
@@ -437,20 +451,6 @@ This project is open-source under the [MIT License](LICENSE).
 ## ⚠️ Disclaimer
 
 This software is provided for **educational and informational purposes only**. It does not constitute financial advice. The AI can hallucinate, and market data APIs can return incorrect or delayed data. **Always verify recommendations manually before taking any action.** Never risk capital you cannot afford to lose. Past performance is not indicative of future results.
-
----
-
-## 🍀 Good Luck & Support the Project
-
-Investing is part discipline, part patience — and a little bit of luck never hurts. We hope ISA AI Analyst helps you make more informed, confident decisions with your ISA.
-
-If the analyst has ever kept you from a bad trade, flagged a risk you missed, or simply saved you time — consider buying us a coffee. Every contribution goes directly towards new features, better models, and keeping the project open-source and free.
-
-[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/clementha)
-
-> *"The stock market is a device for transferring money from the impatient to the patient."* — Warren Buffett
-
-Good luck out there. 📈
 
 ---
 
