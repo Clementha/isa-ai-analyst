@@ -1,8 +1,8 @@
 # 📈 ISA AI Analyst
 
-> **Capital preservation is the primary directive.**
+> Your always-on ISA analyst. Invest with confidence.
 
-ISA AI Analyst is an autonomous, AI-powered **investment analyst** built specifically for **UK Tax-Free ISA accounts**. Think of it as a helpful data assistant that works quietly in the background — analysing your portfolio every day, screening financial news for risk, and delivering clear, data-driven insights directly to your Telegram so you can make better-informed investment decisions without spending hours researching.
+ISA AI Analyst is an autonomous, AI-powered **investment analyst** built specifically for **UK Tax-Free ISA accounts**. Think of it as a helpful data assistant that works quietly in the background — analysing your portfolio every day, screening financial news for risk, and delivering clear, data-driven insights directly to your Telegram so you can make better-informed investment decisions without spending hours researching. It is built on a single principle: **capital preservation first**.
 
 The bot is designed to address two of the biggest challenges for retail investors: **emotional decision-making** (panic-selling on bad news, chasing momentum) and **information overload** (not having time to read the news on every stock you hold). ISA AI Analyst handles both, so you only act when the data says it makes sense to.
 
@@ -22,6 +22,29 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 <!-- SCREENSHOT: Example Telegram report output showing portfolio analysis, trade suggestions, and news risk summary -->
 <img src="docs/screenshots/telegram-report-example.png" alt="Example ISA AI Analyst Telegram report" width="500" />
+
+Each stock entry in the report looks like this:
+
+```
+🔹 Vodafone Group PLC (VOD_LSE_EQ / VOD.LSE) | Price: 74.32
+Target: 25% (£5000.00) | Current: 21.3% (£4260.00)
+Signal: 🟢 GREEN [BUY £500.00 (DCA mode, £740.00 total gap)]
+Gates: SMA 👍 | News 👍 | Volatility 👍
+Catalysts:
+ - Vodafone completes network expansion deal with BT
+ - Analysts raise price target following dividend confirmation
+```
+
+### Reading the Report
+
+| Symbol | Meaning |
+|---|---|
+| 🟢 GREEN | All 3 safety gates passed — a BUY or HOLD action is suggested |
+| 🔴 RED | One or more gates failed — action is SELL or AVOID |
+| 👍 | That individual gate passed |
+| 👎 | That individual gate failed — this is what triggered a RED signal |
+| 🤷 | No recent news found — news gate skipped, not counted as a fail |
+| ⚠️ | News gate could not be evaluated (AI API error) — treated as a fail |
 
 ---
 
@@ -53,15 +76,15 @@ Rather than deploying capital in a single lump sum, ISA AI Analyst scales into p
 - [Core Features](#️-core-features)
 - [Security & Protection](#️-built-in-security--protection-layers)
 - [Prerequisites](#️-prerequisites)
-- [Quick Start — Windows](#-quick-start--windows)
-- [Quick Start — macOS](#-quick-start--macos)
+- [Quick Start](#-quick-start)
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Environment Variable Reference](#-environment-variable-reference)
 - [EODHD Free Tier Limits](#-eodhd-free-tier-limits)
 - [Updating & Maintenance](#-updating--maintenance)
 - [Emergency Reset (Nuke & Restart)](#-emergency-reset-nuke--restart)
 - [Troubleshooting](#-troubleshooting)
-- [Roadmap — Back-Testing](#-roadmap--back-testing)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
 - [License](#-license)
 - [Disclaimer](#️-disclaimer)
 - [Support the Project](#-good-luck--support-the-project)
@@ -70,7 +93,7 @@ Rather than deploying capital in a single lump sum, ISA AI Analyst scales into p
 
 ## 🔍 How It Works
 
-At each scheduled report (default: 08:30 & 16:00 UK time), ISA AI Analyst:
+At each scheduled report (default: **08:30 & 16:00 UK time** — intentionally set half an hour after the LSE opens and half an hour before it closes), ISA AI Analyst:
 
 1. **Reads your portfolio targets** — the stocks you want to hold and at what allocations
 2. **Fetches live market data** from EODHD for every stock in your watchlist
@@ -102,9 +125,9 @@ You can also chat with the analyst at any time in plain English to update your p
 - **Isolated & Containerised:** Runs entirely inside a Docker container, completely separated from your host OS. It can only access files within the project folder you explicitly mounted.†
 - **No Direct Trade Execution:** The analyst never has access to your trading account password. It uses read-only API permissions and can only provide recommendations — it cannot place trades.
 - **Cost-Capped AI:** Usage is restricted to your available API credits. Set hard billing limits in your OpenRouter account to prevent unexpected charges.
-- **Minimised Prompt Injection Risk:** The analyst does not browse arbitrary web pages. It exclusively consumes structured financial data from EODHD, significantly reducing the risk of prompt injection attacks via maliciously crafted web content.
+- **Minimised Prompt Injection Risk (Reports):** During scheduled report generation, the analyst does not browse arbitrary web pages. It exclusively consumes structured financial data from EODHD, significantly reducing the risk of prompt injection attacks via maliciously crafted web content.
 - **Zero-Trust Telegram Pairing:** The bot ignores all Telegram messages until a one-time pairing code is explicitly approved — preventing anyone who discovers your bot username from issuing commands to it.
-- **Caution — Unforeseen Risks:** The bot is smart and has learning capability. There may be edge-case behaviours that are difficult to anticipate. Always monitor it periodically and see the [Emergency Reset](#-emergency-reset-nuke--restart) section if something seems wrong.
+- **Reset Without Losing Your Settings:** If anything seems wrong, do not hesitate to use the [Emergency Reset](#-emergency-reset-nuke--restart) procedure to wipe the container and start fresh.
 
 ---
 
@@ -117,93 +140,79 @@ You only need two things installed before starting:
 
 That's it. The setup script handles all configuration — no code editor required.
 
-| Platform | Setup Script | How to Run |
-|---|---|---|
-| Windows | `setup.bat` | Double-click `setup.bat`, or run it in PowerShell / Command Prompt |
-| macOS | `setup.sh` | `bash setup.sh` in Terminal |
+---
+
+## 🚀 Quick Start
+
+The setup process is the same on both platforms — the only differences are how you get the files and how you launch the setup script.
 
 ---
 
-## 🚀 Quick Start — Windows
+### Step A — Get the Files
 
-### A. Get the Files (Windows)
+| 🪟 Windows | 🍎 macOS |
+|---|---|
+| **Option 1 — Simple Download ✅ Recommended** | **Option 1 — Simple Download ✅ Recommended** |
+| 1. Click the green **Code** button at the top of this page | 1. Click the green **Code** button at the top of this page |
+| 2. Select **Download ZIP** | 2. Select **Download ZIP** |
+| 3. Right-click the ZIP → **Extract All…** | 3. Double-click the ZIP to extract it |
+| 4. Extract to: `C:\Users\YourName\Documents\ISAAIAnalyst` | 4. Move the extracted folder to your **Documents** folder |
+| **Option 2 — Git Clone** | **Option 2 — Git Clone** |
+| Open **PowerShell** and run: | Open **Terminal** and run: |
+| `cd "$env:USERPROFILE\Documents"` | `cd ~/Documents` |
+| `git clone https://github.com/ClementHa/isa-ai-analyst.git` | `git clone https://github.com/ClementHa/isa-ai-analyst.git` |
+| Install Git from [git-scm.com](https://git-scm.com/download/win) if needed — click Next through all defaults | Git is pre-installed on macOS. If prompted, install Xcode Command Line Tools. |
 
-**Option 1 — Simple Download ✅ Recommended for beginners**
-
-1. Click the green **Code** button at the top of this GitHub page
-2. Select **Download ZIP**
-3. When the download finishes, right-click the ZIP file → **Extract All…**
-4. In the destination box, change the path to:
-   ```
-   C:\Users\YourName\Documents\ISAAIAnalyst
-   ```
-   *(Replace `YourName` with your actual Windows username)*
-5. Click **Extract** — done. No Git or terminal needed for this step.
-
-**Option 2 — Git Clone (if you're comfortable with terminals)**
+> **Linux users:** Follow the macOS column. Install [Docker Engine](https://docs.docker.com/engine/install/) then run `bash setup.sh`.
 
 > You do **not** need a GitHub account to clone — cloning a public repo is free and open to everyone.
 
-Open **PowerShell** or **Command Prompt** and run:
+---
 
-```powershell
-cd "$env:USERPROFILE\Documents"
-git clone https://github.com/ClementHa/isa-ai-analyst.git
-cd isa-ai-analyst
-```
+### Step B — Install Docker Desktop
 
-If Git is not installed, download it from [git-scm.com](https://git-scm.com/download/win) and click **Next** through the entire installer — all defaults are fine.
+| 🪟 Windows | 🍎 macOS |
+|---|---|
+| 1. Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) | 1. Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
+| 2. Right-click → **Run as administrator** | 2. Open the `.dmg` and drag Docker to Applications |
+| 3. Click **Next** through all defaults | 3. Open Docker from Applications |
+| 4. **Restart your PC** when prompted | 4. Approve the system extension if prompted |
+| 5. Open **Docker Desktop** from the Start menu and wait for the whale 🐋 icon in the taskbar to stop animating | 5. Wait for the whale 🐋 icon in the menu bar to stop animating |
+
+> ℹ️ **Windows:** Docker automatically installs WSL2 — you do not need to set this up separately.
 
 ---
 
-### B. Install Docker Desktop (Windows)
+### Step C — Create Your Accounts & Gather API Keys
 
-1. Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
-2. Right-click the downloaded file → **Run as administrator**
-3. Click **Next** through the installer — all defaults are fine
-4. **Restart your PC** when prompted
-5. Open **Docker Desktop** from the Start menu and wait for it to finish loading
-   *(the whale 🐋 icon in your taskbar will stop animating when it's ready)*
+> *Note: Some links below are affiliate links. Using them helps support continued open-source development at no extra cost to you.*
 
-> ℹ️ Docker will automatically set up WSL2 and everything else it needs — you do **not** need to install WSL2 separately.
-
----
-
-### C. Create Your Accounts & Gather API Keys (Windows)
-
-You will need accounts with three services. Work through them in order — have each key ready before running the Setup TUI in Step D.
-
-> *Note: Some links below are affiliate links. Using them helps support the continued open-source development of ISA AI Analyst at no extra cost to you.*
+This step is identical on both platforms. Work through each service in order and keep your keys ready for Step D.
 
 ---
 
 #### 🧠 OpenRouter — AI Provider (the Analyst's Brain)
 
-OpenRouter gives you access to many AI models through a single API, including powerful free-tier options.
-
 1. Sign up at **[openrouter.ai](https://openrouter.ai)** and verify your email
-2. Go to **Keys** and click **Create Key** — name it `ISA AI Analyst`
-3. Copy the generated key — you will paste it into the Setup TUI shortly
+2. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
+3. Copy the key
 
 <!-- SCREENSHOT: OpenRouter dashboard showing the Keys page with Create Key button highlighted -->
 <img src="docs/screenshots/openrouter-create-key.png" alt="OpenRouter API key creation" width="600" />
 
-> ℹ️ Adding **$5–$10** to your account unlocks 1,000 free-model requests per day. Set a **spending limit** in Billing to cap any possible charges.
+> ℹ️ Adding **$5–$10** to your account unlocks 1,000 free-model requests per day. Set a **spending limit** in Billing to cap charges.
 
 ---
 
 #### 🏦 Trading 212 — Your ISA Broker
 
-1. Sign up using the affiliate link: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
-2. Select **Stocks ISA** as your account type and complete identity verification
-3. Make a deposit of at least **£1**
-
-   > ⚠️ **Required.** The API option does not appear until the account has been funded at least once.
-
+1. Sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
+2. Select **Stocks ISA** and complete identity verification
+3. Deposit at least **£1** — the API option won't appear until the account is funded
 4. Go to **Settings → API (Beta) → Generate API Key**
 
    > 🔒 **Critical — before you generate:**
-   > When the permissions screen appears, you **MUST uncheck** these two options:
+   > When the permissions screen appears, you **MUST uncheck**:
    > - ❌ **Orders — Execute**
    > - ❌ **Pies — Write**
    >
@@ -218,14 +227,14 @@ OpenRouter gives you access to many AI models through a single API, including po
 
 #### 📊 EODHD — Market Data & Financial News
 
-1. Sign up using the affiliate link: **[Create EODHD Account](https://eodhd.com?via=clementha)**
-2. Once logged in, go to your **Dashboard** — your API token is shown at the top
+1. Sign up: **[Create EODHD Account](https://eodhd.com?via=clementha)**
+2. Go to your **Dashboard** — your API token is shown at the top
 3. Copy the token
 
 <!-- SCREENSHOT: EODHD dashboard showing the API token field highlighted at the top -->
 <img src="docs/screenshots/eodhd-api-token.png" alt="EODHD dashboard API token location" width="600" />
 
-> ℹ️ **Free tier limits apply** — see [EODHD Free Tier Limits](#-eodhd-free-tier-limits) for details on how many stocks you can track per day on the free plan.
+> ℹ️ **Free tier limits apply** — see [EODHD Free Tier Limits](#-eodhd-free-tier-limits) for details.
 
 ---
 
@@ -237,13 +246,17 @@ OpenRouter gives you access to many AI models through a single API, including po
 
 ---
 
-### D. Run the Setup TUI (Windows)
+### Step D — Run the Setup Script
 
-Make sure **Docker Desktop is open and running**, then navigate to your `Documents\ISAAIAnalyst` folder in File Explorer and **double-click `setup.bat`**.
+Make sure **Docker Desktop is open and running**, then launch the setup script:
 
-*(Alternatively, open PowerShell, `cd` to the folder, and run `setup.bat`)*
+| 🪟 Windows | 🍎 macOS |
+|---|---|
+| Navigate to your `Documents\ISAAIAnalyst` folder in File Explorer | Open **Terminal** and `cd` to the project folder |
+| **Double-click `setup.bat`** | Run `bash setup.sh` |
+| *(Or open PowerShell, `cd` to the folder, and run `setup.bat`)* | |
 
-You will see this interface:
+You will see this interactive menu:
 
 ```
 =================================================
@@ -268,17 +281,15 @@ You will see this interface:
 Enter choice [0-9]:
 ```
 
-Work through options **1 → 2 → 3 → 4** in order, pasting in your API keys when prompted. Once all four are ticked, select option **5 (Run Initial Setup)** to boot the container and configure the analyst engine automatically.
+Work through options **1 → 2 → 3 → 4** in order, pasting your API keys when prompted. Once all four are ticked, select **5 (Run Initial Setup)** to boot the container. The status will update to **[RUNNING]** with all items showing **[OK]**.
 
-Once complete, the status updates to **[RUNNING]** with all items showing **[OK]**.
-
-> 💡 You can return to `setup.bat` at any time to start, stop, view logs, or update your API keys.
+> 💡 You can return to the setup script at any time to start, stop, view logs, or update your API keys.
 
 ---
 
-### E. Pair Your Telegram Bot (Windows)
+### Step E — Pair Your Telegram Bot
 
-The analyst uses a zero-trust pairing system — it ignores all messages until you explicitly approve a one-time code.
+The analyst uses a zero-trust pairing system — it ignores all messages until you explicitly approve a one-time code. This prevents anyone who finds your bot's username from issuing commands to it.
 
 1. Open Telegram and search for your bot by the username you created with @BotFather
 2. Send any message — `hello` is fine
@@ -287,15 +298,15 @@ The analyst uses a zero-trust pairing system — it ignores all messages until y
    Your pairing code is: Z2EDQKMK
    Approve this code to continue.
    ```
-4. Go back to `setup.bat`, select option **9 (Approve Telegram Pairing)**, and paste the code when prompted
+4. Go back to the setup script, select option **9 (Approve Telegram Pairing)**, and paste the code when prompted
 
 The bot confirms the connection and is ready.
 
-> ⚠️ You may need to repeat this step if you fully restart the container.
+> ⚠️ You may need to repeat this step if you fully restart the container. See [Troubleshooting](#-troubleshooting) if the code is never accepted.
 
 ---
 
-### F. Talk to Your Analyst (Windows)
+### Step F — Talk to Your Analyst
 
 Open Telegram and message your bot. Some useful prompts to get started:
 
@@ -310,9 +321,9 @@ Open Telegram and message your bot. Some useful prompts to get started:
 
 ---
 
-### 🎉 Windows Setup Complete!
+### 🎉 Setup Complete!
 
-Congratulations — ISA AI Analyst is now fully up and running on Windows!
+Congratulations — ISA AI Analyst is now fully up and running!
 
 - ✅ A securely containerised AI analyst running entirely on your own machine
 - ✅ Read-only Trading 212 integration — no accidental trades are possible
@@ -322,65 +333,19 @@ Congratulations — ISA AI Analyst is now fully up and running on Windows!
 
 Your first scheduled report arrives at the next run time (default: 08:30 or 16:00 UK). Can't wait? Send **`Run it now.`** on Telegram for an immediate report.
 
----
-
-## 🍎 Quick Start — macOS
-
-### A. Get the Files (macOS)
-
-Open **Terminal** and run:
-
-```bash
-cd ~/Documents
-git clone https://github.com/ClementHa/isa-ai-analyst.git
-cd isa-ai-analyst
-```
-
-> **Linux users:** The macOS instructions work as-is. Install [Docker Engine](https://docs.docker.com/engine/install/) then run `bash setup.sh`.
+If you find ISA AI Analyst useful, please consider [⭐ starring the repository](https://github.com/ClementHa/isa-ai-analyst) — it helps others discover the project and keeps development going.
 
 ---
 
-### B. Create Your Accounts & Gather API Keys (macOS)
+## ⚠️ A Note on AI and Web Searches
 
-Follow the same account setup steps as described in the [Windows guide above](#c-create-your-accounts--gather-api-keys-windows) — the process is identical on macOS.
+When you ask the analyst to look up information on your behalf — such as researching a company or checking news from the web — it may visit external pages. A technique known as **indirect prompt injection** means a malicious website could embed hidden instructions designed to manipulate the AI's response; for example, a rogue page could attempt to trick the analyst into recommending a trade it would not otherwise make.
 
----
+To stay safe:
 
-### C. Run the Setup TUI (macOS)
-
-Make sure **Docker Desktop is open and running**, then in Terminal:
-
-```bash
-bash setup.sh
-```
-
-Work through options **1 → 2 → 3 → 4** to paste in your API keys, then select **5 (Run Initial Setup)** to boot the container.
-
-> 💡 You can return to `bash setup.sh` at any time to start, stop, view logs, or update your API keys.
-
----
-
-### D. Pair Your Telegram Bot (macOS)
-
-1. Open Telegram and search for your bot
-2. Send any message — `hello` is fine
-3. Copy the pairing code the bot replies with
-4. In the setup TUI, select option **9 (Approve Telegram Pairing)** and paste the code
-
-The bot confirms the connection and is ready.
-
----
-
-### E. Talk to Your Analyst (macOS)
-
-| Message | Action |
-|---|---|
-| `Run it now.` | Triggers an immediate portfolio analysis and report |
-| `Add Scottish Mortgage at 25%` | Resolves tickers automatically and adds to your portfolio |
-| `Show my portfolio` | Displays current allocations and unallocated percentage |
-| `What is my current schedule?` | Shows the configured report times |
-| `Set my DCA limit to £300` | Updates your daily DCA cap |
-| `Pause reporting.` | Suspends automatic daily reports |
+- Treat any web-assisted response with an extra layer of scepticism
+- Prefer asking the analyst to analyse data from its scheduled reports, rather than fetching information from arbitrary URLs
+- If a response seems out of character, discard it and use the [Emergency Reset](#-emergency-reset-nuke--restart) if needed
 
 ---
 
@@ -458,7 +423,7 @@ That's **6 calls per stock per report**. With the default twice-daily schedule, 
 
 > 🆓 **~3 stocks across your 2 daily reports** on the free plan.
 
-If you want to track more stocks or increase your report frequency, you will need to upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
+If you want to track more stocks or increase your report frequency, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
 
 ---
 
@@ -474,8 +439,9 @@ docker compose up -d --build
 
 To stop the analyst without removing configuration:
 
-- **Windows:** Run `setup.bat` and select option **7**
-- **macOS:** Run `bash setup.sh` and select option **7**
+| 🪟 Windows | 🍎 macOS / Linux |
+|---|---|
+| Run `setup.bat` → select option **7** | Run `bash setup.sh` → select option **7** |
 
 Or directly from any terminal:
 
@@ -489,7 +455,7 @@ docker compose stop
 
 > Use this if the bot behaves unexpectedly, seems stuck in a loop, or you simply want a clean slate.
 
-The bot is smart and has learning capability — while this makes it more effective, there may be edge-case behaviours that are difficult to anticipate. If something feels wrong, don't hesitate to nuke and start over. **Your API keys and portfolio configuration are not affected** — only the running container and its internal state are wiped.
+**Your API keys and portfolio configuration are not affected** — only the running container and its internal state are wiped.
 
 **Step 1 — Stop and remove everything:**
 
@@ -503,13 +469,13 @@ docker compose down --volumes --rmi all
 docker compose up -d --build
 ```
 
-Or on Windows, simply re-run `setup.bat` and select option **5 (Run Initial Setup)**.
+On Windows you can alternatively re-run `setup.bat` and select option **5 (Run Initial Setup)**.
 
 **Step 3 — Re-pair your Telegram bot:**
 
-The container pairing state is reset, so redo [Step E (Windows)](#e-pair-your-telegram-bot-windows) or [Step D (macOS)](#d-pair-your-telegram-bot-macos) once more.
+The pairing state is reset — redo [Step E](#step-e--pair-your-telegram-bot) once more.
 
-> ℹ️ If you want to preserve conversation history and learned preferences, use `docker compose stop` followed by `docker compose start` instead — these pause and resume without wiping state.
+> ℹ️ To preserve conversation history and learned preferences instead, use `docker compose stop` followed by `docker compose start` — these pause and resume without wiping state.
 
 ---
 
@@ -517,12 +483,12 @@ The container pairing state is reset, so redo [Step E (Windows)](#e-pair-your-te
 
 **Pairing code is never accepted**
 - The container session state was likely lost on a restart
-- Fix: `docker compose down` then `docker compose up -d`, then redo the pairing step from scratch
+- Fix: `docker compose down` → `docker compose up -d` → redo Step E
 
 **Bot not responding on Telegram**
 - Confirm Docker is running: `docker compose ps`
 - Check logs via the setup script (option 8) or `docker compose logs -f`
-- Confirm you completed the pairing step — the bot silently ignores all messages until paired
+- Confirm you completed Step E — the bot silently ignores all messages until paired
 - Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are correct (re-run option 4 in the setup script)
 
 **"API Key invalid" error in logs**
@@ -543,11 +509,13 @@ The container pairing state is reset, so redo [Step E (Windows)](#e-pair-your-te
 - If you still see a WSL error, open PowerShell as Administrator and run `wsl --install`, then restart
 
 **`setup.bat` closes immediately on Windows**
-- Right-click `setup.bat` and choose **Run as Administrator**, or open a Command Prompt first and run `setup.bat` from within it so the window stays open if an error occurs
+- Right-click `setup.bat` → **Run as Administrator**, or open a Command Prompt first and run `setup.bat` from within it so the window stays open on error
 
 ---
 
-## 🔭 Roadmap — Back-Testing
+## 🔭 Roadmap
+
+### 📊 Back-Testing
 
 If ISA AI Analyst receives strong community feedback, the next major feature planned is **back-testing capability**.
 
@@ -557,7 +525,25 @@ Back-testing lets you run the analyst's strategy against **historical market dat
 - **Tune your parameters** — experiment with different DCA limits, volatility thresholds, and news sensitivity settings and compare outcomes
 - **Build confidence** — understand how the analyst would have behaved during specific market events (e.g. a sector crash, a spike in volatility)
 
-⭐ **Star the repo and leave feedback** to help prioritise this feature — the more interest shown, the sooner it gets built.
+---
+
+### ☁️ Managed Cloud Service
+
+One of the biggest practical limitations of the self-hosted version is that **it only runs when your computer is on**. If your machine is asleep at 08:30, you miss the morning report.
+
+A managed cloud version is planned to solve this. The goal is simple: sign up, connect your API keys via a secure web dashboard, and your analyst runs 24/7 in the cloud — no Docker, no installation, no leaving your desktop powered on.
+
+**Planned pricing: £5/month** — enough to cover hosting costs while keeping it genuinely affordable for any ISA investor.
+
+> 🙋 **Interested?** Star the repo and leave a comment in [Discussions](https://github.com/ClementHa/isa-ai-analyst/discussions) — demand directly influences how soon this gets built.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome and appreciated! Whether it's a bug fix, a new feature, or an improvement to the documentation — please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a Pull Request. It covers how to fork the repo, branch naming conventions, how to run the project locally for development, and the PR review process.
+
+If you have an idea but aren't sure where to start, open a [GitHub Discussion](https://github.com/ClementHa/isa-ai-analyst/discussions) first — happy to talk it through.
 
 ---
 
@@ -577,7 +563,7 @@ This software is provided for **educational and informational purposes only**. I
 
 ---
 
-‡ **Advanced Users — Local LLM Support:** ISA AI Analyst supports running with a local LLM (e.g. via [Ollama](https://ollama.com/)), removing the need for an OpenRouter account or any AI API costs. This is intended for technically proficient users comfortable editing configuration files. After completing the setup TUI, open the `.env` file in the project folder and override these three variables:
+‡ **Advanced Users — Local LLM Support:** ISA AI Analyst supports running with a local LLM (e.g. via [Ollama](https://ollama.com/)), removing the need for an OpenRouter account or any AI API costs. This is intended for technically proficient users comfortable editing configuration files. After completing the setup script, open the `.env` file in the project folder and override these three variables:
 
 ```env
 LLM_BASE_URL="http://host.docker.internal:11434/v1/chat/completions"
@@ -585,4 +571,4 @@ LLM_MODEL="qwen2.5:32b"
 LLM_API_KEY="ollama"
 ```
 
-Ensure Ollama is installed and running on your host machine with the target model already pulled (e.g. `ollama pull qwen2.5:32b`) before starting the bot. Any OpenAI-compatible local inference server can be used by adjusting `LLM_BASE_URL` and `LLM_MODEL` accordingly. The `Set AI API Key (OpenRouter)` step in the setup TUI can be skipped entirely if using this mode.
+Ensure Ollama is installed and running on your host machine with the target model already pulled (e.g. `ollama pull qwen2.5:32b`) before starting the bot. Any OpenAI-compatible local inference server can be used by adjusting `LLM_BASE_URL` and `LLM_MODEL` accordingly. The `Set AI API Key (OpenRouter)` step in the setup script can be skipped entirely if using this mode.

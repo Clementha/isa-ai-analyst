@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Clement Ha
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 #!/bin/bash
 
 # Ensure the .env file exists so we can check it safely
