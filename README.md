@@ -156,7 +156,7 @@ The setup process is the same on both platforms — the only differences are how
 | 1. Click the green **Code** button at the top of this page | 1. Click the green **Code** button at the top of this page |
 | 2. Select **Download ZIP** | 2. Select **Download ZIP** |
 | 3. Right-click the ZIP → **Extract All…** | 3. Double-click the ZIP to extract it |
-| 4. Extract to: `C:\Users\YourName\Documents\ISAAIAnalyst` | 4. Move the extracted folder to your **Documents** folder |
+| 4. Extract to: `C:\Users\YourName\Documents\isa-ai-analyst` | 4. Move the extracted folder to your **Documents** folder |
 | **Option 2 — Git Clone** | **Option 2 — Git Clone** |
 | Open **PowerShell** and run: | Open **Terminal** and run: |
 | `cd "$env:USERPROFILE\Documents"` | `cd ~/Documents` |
@@ -252,7 +252,7 @@ Make sure **Docker Desktop is open and running**, then launch the setup script:
 
 | 🪟 Windows | 🍎 macOS |
 |---|---|
-| Navigate to your `Documents\ISAAIAnalyst` folder in File Explorer | Open **Terminal** and `cd` to the project folder |
+| Navigate to your `Documents\isa-ai-analyst` folder in File Explorer | Open **Terminal** and `cd` to the project folder |
 | **Double-click `setup.bat`** | Run `bash setup.sh` |
 | *(Or open PowerShell, `cd` to the folder, and run `setup.bat`)* | |
 

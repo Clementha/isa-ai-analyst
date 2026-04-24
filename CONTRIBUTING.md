@@ -28,8 +28,8 @@ Be respectful, constructive, and collaborative. This is a welcoming project — 
 
 You don't have to write code to contribute. Here are some valuable ways to help:
 
-- 🐛 **Report a bug** — open a [GitHub Issue](https://github.com/ClementHa/IsaAiAnalyst/issues)
-- 💬 **Suggest a feature** — start a [GitHub Discussion](https://github.com/ClementHa/IsaAiAnalyst/discussions)
+- 🐛 **Report a bug** — open a [GitHub Issue](https://github.com/ClementHa/isa-ai-analyst/issues)
+- 💬 **Suggest a feature** — start a [GitHub Discussion](https://github.com/ClementHa/isa-ai-analyst/discussions)
 - 📝 **Improve documentation** — fix typos, clarify steps, add examples
 - 🧪 **Write tests** — help expand test coverage for `math_engine.py` or the OpenClaw integration
 - 🌍 **Translate** — help make the README or setup guide accessible in other languages
@@ -51,14 +51,14 @@ You don't have to write code to contribute. Here are some valuable ways to help:
 2. Clone your fork locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/IsaAiAnalyst.git
+git clone https://github.com/YOUR_USERNAME/isa-ai-analyst.git
 cd isa-ai-analyst
 ```
 
 3. Add the upstream remote so you can pull future changes from the main repo:
 
 ```bash
-git remote add upstream https://github.com/ClementHa/IsaAiAnalyst.git
+git remote add upstream https://github.com/ClementHa/isa-ai-analyst.git
 ```
 
 ### Set Up Your Environment
@@ -143,7 +143,7 @@ git push origin feat/your-feature-name
 
 ## 🐛 Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/ClementHa/IsaAiAnalyst/issues) and include:
+Open a [GitHub Issue](https://github.com/ClementHa/isa-ai-analyst/issues) and include:
 
 - A clear description of the problem
 - Steps to reproduce it
@@ -157,7 +157,7 @@ Please **redact all API keys** before pasting any logs or `.env` contents.
 
 ## 🚀 Suggesting Features
 
-Open a [GitHub Discussion](https://github.com/ClementHa/IsaAiAnalyst/discussions) rather than an Issue for feature ideas — it's a better format for open-ended conversation. Include:
+Open a [GitHub Discussion](https://github.com/ClementHa/isa-ai-analyst/discussions) rather than an Issue for feature ideas — it's a better format for open-ended conversation. Include:
 
 - What problem the feature solves
 - Who would benefit from it
