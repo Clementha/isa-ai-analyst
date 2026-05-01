@@ -8,6 +8,19 @@ import schedule
 import os
 import re
 import datetime
+import fcntl
+import sys
+
+# --- SINGLE INSTANCE LOCK ---
+LOCK_FILE = '/tmp/isa_scheduler.lock'
+lock_fp = open(LOCK_FILE, 'w')
+try:
+    # Try to grab an exclusive, non-blocking lock
+    fcntl.lockf(lock_fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print("⚠️ Duplicate scheduler detected by hot-reload. Shutting down this instance.")
+    sys.exit(0)
+# ----------------------------
 
 ENGINE_PATH = '/app/math_engine.py'
 HEARTBEAT_PATH = '/root/.openclaw/workspace/HEARTBEAT.md'
