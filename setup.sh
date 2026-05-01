@@ -53,9 +53,9 @@ show_menu() {
 
     echo " SETUP CHECKLIST:"
     echo "  1) $LLM_CHECK 🧠 Set AI API Key (OpenRouter)"
-    echo "  2) $T212_CHECK 💰 Set Broker API Keys (Trading 212)"
+    echo "  2) $T212_CHECK ❤️ Set Broker API Keys (Trading 212)"
     echo "  3) $EOD_CHECK 👁️  Set Market Data API Key (EODHD)"
-    echo "  4) $TG_CHECK 💬 Set Telegram API Keys"
+    echo "  4) $TG_CHECK 👄 Set Telegram API Keys"
     
     # Grey out Initial Setup if keys aren't done
     if [ "$ALL_KEYS_SET" = true ]; then
