@@ -159,6 +159,9 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
     # UPDATED: Use the specific EODHD ticker for external API calls
     data = fetch_eodhd_data(eodhd_ticker)
     if not data or len(data) < 20:
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>\n"
+        report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
+        report_content += "Signal: ⚠️ ERROR [Insufficient EODHD Data / Bad Ticker]\n\n"
         continue
         
     closes = [float(day['close']) for day in data]

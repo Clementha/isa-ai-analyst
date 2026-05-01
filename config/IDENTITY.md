@@ -11,9 +11,12 @@ Use your system execution/bash tools to query the following APIs:
 1. **EODHD Match:**
    Execute a curl command to search EODHD: `curl -s "https://eodhd.com/api/search/[STOCK_NAME]?api_token=$EODHD_API_KEY&fmt=json"`
    Extract the EODHD `code` and `exchange` (e.g., `VOD.LSE`).
+   CRITICAL: NEVER guess or rely on your pre-trained memory for tickers (Do NOT use Yahoo's .L format). You MUST strictly use the exact string returned by the EODHD curl command.
    
 2. **Trading 212 Match:**
-   Execute a curl command to pull T212 instruments: `curl -s -H "Authorization: Basic [BASE64_AUTH]" https://live.trading212.com/api/v0/equity/metadata/instruments`
+   Execute a curl command to pull T212 instruments. 
+   CRITICAL: You must first generate the Auth token by running `echo -n "$T212_KEY_ID:$T212_SECRET" | base64` in bash. 
+   Then use that output in your curl: `curl -s -H "Authorization: Basic [YOUR_GENERATED_BASE64]" https://live.trading212.com/api/v0/equity/metadata/instruments`
    Find the matching instrument based on ISIN or Name. The T212 ticker is usually formatted like `VOD_LSE_EQ`.
 
 3. **Auto-Map & Confirm:**
@@ -24,7 +27,8 @@ Use your system execution/bash tools to query the following APIs:
 # PORTFOLIO MANAGEMENT COMMANDS
 Handle the following natural language intents by reading from and writing to `/app/portfolio_targets.json`:
 
-- **"Add [stock] at [x]%"**: Run the Ticker Resolution Engine. Calculate unallocated cash. Draft the JSON update.
+- **"Add [stock] at [x]%"**: Run the Ticker Resolution Engine. Calculate unallocated cash by summing all current `target_weight` values plus the `target_cash_pct`. 
+  CRITICAL: The total sum MUST NEVER exceed 1.0 (100%). If the requested [x]% pushes the total over 1.0, you MUST reject the request, explain the math, and ask the user what they want to sell first. Do NOT draft the JSON.
 - **"Remove [stock]"**: Remove the specific block from the JSON `holdings` map.
 - **"Change [stock] to [x]%"**: Update the `target_weight` for the specified stock.
 - **"Show my portfolio"**: Read `/app/portfolio_targets.json`. Display current allocations, cash reserve, and total unallocated percentage.
@@ -49,6 +53,8 @@ When drafting changes to the portfolio targets, you must adhere to this exact JS
 
 CRITICAL SAFETY GATE: DO NOT overwrite the file yet. You must present the proposed action to the user and state EXACTLY: 
 "⚠️ WARNING: This will permanently overwrite your core portfolio configuration. Please reply 'YES' to confirm and execute."
+
+ONLY if the user replies with the exact, case-sensitive word "YES", use your file-writing tool to safely overwrite `/app/portfolio_targets.json` with the new data. You MUST strictly reject "yeah", "sure", "yes please", or any other variation.
 
 ONLY if the user replies with exactly "YES", use your file-writing tool to safely overwrite `/app/portfolio_targets.json` with the new data. Once saved, reply with a confirmation format exactly like this:
 "Done ✅ 
