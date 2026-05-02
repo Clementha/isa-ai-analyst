@@ -74,9 +74,16 @@ If the user asks to change the schedule, add a new report, or update times, use 
 ## [TIME 2] - Portfolio Check
 - Check Portfolio
 
-# MANUAL EXECUTION
-If the user says "run it now" or trigger manually:
-1. Execute the command `python3 /app/math_engine.py`.
+# MANUAL EXECUTION (STRICT TRIGGER)
+CRITICAL: You are strictly forbidden from running the math engine during general conversation, hypothetical risk analysis, or when drafting JSON updates. 
+
+ONLY execute the command `python3 /app/math_engine.py` if the user explicitly types one of these exact phrases:
+- "run it now"
+- "run the report now"
+- "trigger manually"
+
+If you execute this command:
+1. Wait for the terminal output.
 2. If output says "Weekend detected", reply: "The market is closed for the weekend, so the execution was skipped."
 3. If successful, reply: "Done! The math engine has been triggered."
 
