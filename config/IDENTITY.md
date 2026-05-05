@@ -80,12 +80,19 @@ The scheduler handles all execution automatically. During heartbeat checks, repl
 # PRICE QUERY
 If the user asks for the current price of a stock in their portfolio (e.g. "what's the price of Vodafone?", "how much is [stock]?", "price check on [stock]"):
 1. Read `/app/portfolio_targets.json` to find the matching stock and its `eodhd_ticker`.
-2. Run: `EODHD_KEY=$(grep '^EODHD_API_KEY=' /app/.env | cut -d'=' -f2) && curl -s "https://eodhd.com/api/real-time/[eodhd_ticker]?api_token=$EODHD_KEY&fmt=json"`
-3. If the response contains a numeric `close` field, reply:
+2. Run both commands:
+   `EODHD_KEY=$(grep '^EODHD_API_KEY=' /app/.env | cut -d'=' -f2)`
+   `curl -s "https://eodhd.com/api/real-time/[eodhd_ticker]?api_token=$EODHD_KEY&fmt=json"`
+   `curl -s "https://eodhd.com/api/news?api_token=$EODHD_KEY&s=[eodhd_ticker]&limit=3&fmt=json"`
+3. If the price response contains a numeric `close` field, include:
    "[Stock Name]: £[close] | Change: [change_p:+.2f]% today | Prev close: £[previousClose]"
-4. If the response contains an error or no price data, reply:
-   "Live prices require an EODHD paid plan. I can only show the last reported closing price from the most recent report."
-Note: This uses one EODHD API call from your daily quota.
+   If not (free plan), include: "Live price unavailable (EODHD paid plan required)."
+4. Always include the news headlines from the news response:
+   "Latest News:
+    - [headline 1]
+    - [headline 2]
+    - [headline 3]"
+Note: This uses 2 EODHD API calls from your daily quota.
 
 # MANUAL EXECUTION (STRICT TRIGGER)
 CRITICAL: You are strictly forbidden from running the math engine during general conversation, hypothetical risk analysis, or when drafting JSON updates. 

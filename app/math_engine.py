@@ -185,6 +185,12 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
     latest = closes[-1]
     prev = closes[-2]
 
+    raw_date = data[-1].get('date', '')
+    try:
+        price_date = datetime.datetime.strptime(raw_date, '%Y-%m-%d').strftime('%a %d %b')
+    except ValueError:
+        price_date = raw_date
+
     recent_news = fetch_news(eodhd_ticker)
     if not recent_news:
         recent_news = ["No recent news found."]
@@ -212,7 +218,7 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
     all_green = sma_pass and vol_pass and news_pass
 
     if SESSION == "morning":
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Prev Close: £{latest:.2f}\n"
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f} ({price_date})\n"
         report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
         report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
         report_content += f"Outlook: {'🟢 GREEN' if all_green else '🔴 RISK FLAGGED'}\n"
@@ -229,7 +235,7 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
             signal_color = "🔴 RED"
             action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
 
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f}\n"
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f} ({price_date})\n"
         report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
         report_content += f"Signal: {signal_color} [{action}]\n"
         report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
