@@ -18,21 +18,47 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 ## 📊 Example Report
 
-*This is what lands in your Telegram twice a day:*
+*The analyst delivers two reports per day — a morning briefing and an evening analysis:*
 
 <!-- SCREENSHOT: Example Telegram report output showing portfolio analysis, trade suggestions, and news risk summary -->
 <img src="docs/screenshots/telegram-report-example.png" alt="Example ISA AI Analyst Telegram report" width="500" />
 
-Each stock entry in the report looks like this:
+**Morning Briefing (08:30)** — pre-market context based on the previous close:
 
 ```
-🔹 Vodafone Group PLC (VOD_LSE_EQ / VOD.LSE) | Price: 74.32
-Target: 25% (£5000.00) | Current: 21.3% (£4260.00)
-Signal: 🟢 GREEN [BUY £500.00 (DCA mode, £740.00 total gap)]
-Gates: SMA 👍 | News 👍 | Volatility 👍
-Catalysts:
+=== 🌅 MORNING BRIEFING ===
+06 May 2026 | Prices as of previous close
+
+Portfolio Value: £12,450.00
+------------------------------
+
+🔹 Vodafone Group PLC (VOD_LSE_EQ / VOD.LSE) | Close: £74.32 (Mon 05 May)
+Holding: 21.3% (£4,260.00) → Target: 25%
+Gates: SMA 👍 | Vol 👍 | News 👍
+Outlook: 🟢 GREEN
+Overnight News:
  - Vodafone completes network expansion deal with BT
  - Analysts raise price target following dividend confirmation
+```
+
+**Evening Analysis (17:30)** — actionable recommendations using today's confirmed closing prices:
+
+```
+=== 📊 EVENING ANALYSIS ===
+06 May 2026 | Today's closing prices
+
+Total Value: £12,480.00
+Target Cash: 25.0%
+------------------------------
+
+🔹 Vodafone Group PLC (VOD_LSE_EQ / VOD.LSE) | Close: £74.86 (Tue 06 May)
+Target: 25% (£5,000.00) | Current: 21.1% (£4,280.00)
+Signal: 🟢 GREEN [BUY £500.00 (DCA mode, £720.00 total gap)]
+Gates: SMA 👍 | Vol 👍 | News 👍
+Today's News:
+ - Vodafone completes network expansion deal with BT
+ - Analysts raise price target following dividend confirmation
+ - Telecoms sector outperforms FTSE 100 for third consecutive week
 ```
 
 ### Reading the Report
@@ -93,15 +119,20 @@ Rather than deploying capital in a single lump sum, ISA AI Analyst scales into p
 
 ## 🔍 How It Works
 
-At each scheduled report (default: **08:30 & 16:00 UK time** — intentionally set half an hour after the LSE opens and half an hour before it closes), ISA AI Analyst:
+The analyst runs twice a day at default times of **08:30 and 17:30 UK time**:
+
+- **Morning Briefing (08:30)** — uses the previous day's closing prices to flag overnight news risks and give you a market-open context before you start your day.
+- **Evening Analysis (17:30)** — runs after LSE closes at 16:30, using today's confirmed closing prices to produce the actionable BUY/SELL/HOLD recommendations you act on the next morning.
+
+At each report, it:
 
 1. **Reads your portfolio targets** — the stocks you want to hold and at what allocations
-2. **Fetches live market data** from EODHD for every stock in your watchlist
+2. **Fetches market data** from EODHD for every stock in your watchlist
 3. **Applies the 3 Safety Gates** — trend, volatility, and news checks for each holding
 4. **Compares your current holdings** via the Trading 212 read-only API against your targets
-5. **Generates a Markdown report** and pushes it to your Telegram with analyst commentary
+5. **Generates a report** and pushes it directly to your Telegram
 
-You can also chat with the analyst at any time in plain English to update your portfolio, change your schedule, or trigger an immediate report.
+You can also chat with the analyst at any time in plain English to update your portfolio, change your schedule, trigger an immediate report, or ask for the latest price and news on any stock you hold.
 
 ---
 
@@ -109,13 +140,14 @@ You can also chat with the analyst at any time in plain English to update your p
 
 | Feature | Description |
 |---|---|
-| 🤖 **100% Autonomous** | Runs automatically at configurable times (default: 08:30 & 16:00 UK time) |
+| 🤖 **100% Autonomous** | Runs automatically at configurable times (default: 08:30 morning briefing & 17:30 evening analysis, UK time) |
+| 🌅 **Two-Format Reports** | Morning briefing for pre-market context; evening analysis with confirmed closing prices and DCA recommendations |
 | 🛡️ **3-Gate Safety Filter** | Every BUY signal must pass trend, volatility, and AI news checks before being recommended |
 | 📉 **DCA Engine** | Scales into positions gradually up to a daily limit — no lump-sum exposure |
-| 📰 **AI News Risk Manager** | Scans daily headlines and blocks recommendations if severe fundamental risks are detected |
+| 📰 **AI News Risk Manager** | Scans up to 5 headlines per stock and blocks recommendations if severe fundamental risks are detected |
 | 🔒 **Fail-Secure Architecture** | If the market is closed or an API goes down, the analyst safely skips execution |
-| 📱 **Telegram Integration** | Actionable Markdown reports pushed straight to your phone |
-| 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, or change your schedule |
+| 📱 **Telegram Integration** | Reports pushed straight to your phone, with instant price and news lookup on demand |
+| 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, change your schedule, or request a price check |
 | 🔎 **Auto Ticker Resolution** | Tell the bot a stock name — it resolves the correct T212 and EODHD ticker symbols automatically |
 
 ---
@@ -124,9 +156,8 @@ You can also chat with the analyst at any time in plain English to update your p
 
 - **Isolated & Containerised:** Runs entirely inside a Docker container, completely separated from your host OS. It can only access files within the project folder you explicitly mounted.†
 - **No Direct Trade Execution:** The analyst never has access to your trading account password. It uses read-only API permissions and can only provide recommendations — it cannot place trades.
-- **Cost-Capped AI:** Usage is restricted to your available API credits. Set hard billing limits in your OpenRouter account to prevent unexpected charges.
+- **Budget-Controlled Running Costs:** All costs are bounded and predictable. OpenRouter charges only what you use — disable auto top-up when registering and set a hard spending limit so there are no surprise bills. EODHD runs on the free tier or a fixed monthly plan. Neither service can charge you more than you authorise.
 - **Minimised Prompt Injection Risk (Reports):** During scheduled report generation, the analyst does not browse arbitrary web pages. It exclusively consumes structured financial data from EODHD, significantly reducing the risk of prompt injection attacks via maliciously crafted web content.
-- **Zero-Trust Telegram Pairing:** The bot ignores all Telegram messages until a one-time pairing code is explicitly approved — preventing anyone who discovers your bot username from issuing commands to it.
 - **Reset Without Losing Your Settings:** If anything seems wrong, do not hesitate to use the [Emergency Reset](#-emergency-reset-nuke--restart) procedure to wipe the container and start fresh.
 
 ---
@@ -136,7 +167,9 @@ You can also chat with the analyst at any time in plain English to update your p
 You only need two things installed before starting:
 
 1. **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** — runs the analyst in its secure container
-2. **[Telegram](https://telegram.org/)** — download on your phone (and desktop if you prefer) to receive reports and chat with the analyst
+2. **Telegram** — install on both your phone and your computer:
+   - 📱 Mobile: [iOS](https://apps.apple.com/app/telegram-messenger/id686449807) / [Android](https://play.google.com/store/apps/details?id=org.telegram.messenger)
+   - 🖥️ Desktop: [Telegram Desktop](https://desktop.telegram.org/) (recommended — makes it much easier to copy pairing codes and API keys during setup)
 
 That's it. The setup script handles all configuration — no code editor required.
 
@@ -152,20 +185,12 @@ The setup process is the same on both platforms — the only differences are how
 
 | 🪟 Windows | 🍎 macOS |
 |---|---|
-| **Option 1 — Simple Download ✅ Recommended** | **Option 1 — Simple Download ✅ Recommended** |
 | 1. Click the green **Code** button at the top of this page | 1. Click the green **Code** button at the top of this page |
 | 2. Select **Download ZIP** | 2. Select **Download ZIP** |
 | 3. Right-click the ZIP → **Extract All…** | 3. Double-click the ZIP to extract it |
 | 4. Extract to: `C:\Users\YourName\Documents\isa-ai-analyst` | 4. Move the extracted folder to your **Documents** folder |
-| **Option 2 — Git Clone** | **Option 2 — Git Clone** |
-| Open **PowerShell** and run: | Open **Terminal** and run: |
-| `cd "$env:USERPROFILE\Documents"` | `cd ~/Documents` |
-| `git clone https://github.com/ClementHa/isa-ai-analyst.git` | `git clone https://github.com/ClementHa/isa-ai-analyst.git` |
-| Install Git from [git-scm.com](https://git-scm.com/download/win) if needed — click Next through all defaults | Git is pre-installed on macOS. If prompted, install Xcode Command Line Tools. |
 
-> **Linux users:** Follow the macOS column. Install [Docker Engine](https://docs.docker.com/engine/install/) then run `bash setup.sh`.
-
-> You do **not** need a GitHub account to clone — cloning a public repo is free and open to everyone.
+> **Linux users:** Install [Docker Engine](https://docs.docker.com/engine/install/), extract the ZIP, then run `bash setup.sh`.
 
 ---
 
@@ -194,13 +219,15 @@ This step is identical on both platforms. Work through each service in order and
 #### 🧠 OpenRouter — AI Provider (the Analyst's Brain)
 
 1. Sign up at **[openrouter.ai](https://openrouter.ai)** and verify your email
-2. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
-3. Copy the key
+2. > ⚠️ **Before adding any credit:** go to **Settings → Credits** and make sure **Auto top-up is OFF**. This prevents unexpected charges.
+3. Add credit — **US$5 is typically enough for a full year** of regular usage, though this depends on your chosen model and how often you run manual queries.
+4. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
+5. Copy the key
 
 <!-- SCREENSHOT: OpenRouter dashboard showing the Keys page with Create Key button highlighted -->
 <img src="docs/screenshots/openrouter-create-key.png" alt="OpenRouter API key creation" width="600" />
 
-> ℹ️ Adding **$5–$10** to your account unlocks 1,000 free-model requests per day. Set a **spending limit** in Billing to cap charges.
+> ℹ️ Set a hard **spending limit** in Billing as an extra safeguard against runaway usage.
 
 ---
 
@@ -211,12 +238,16 @@ This step is identical on both platforms. Work through each service in order and
 3. Deposit at least **£1** — the API option won't appear until the account is funded
 4. Go to **Settings → API (Beta) → Generate API Key**
 
-   > 🔒 **Critical — before you generate:**
-   > When the permissions screen appears, you **MUST uncheck**:
+   > 🔒 **Critical — set permissions carefully on the next screen:**
+   > - ✅ Turn **Account data** → **On**
+   > - ✅ Turn **Portfolio** → **On**
+   > - Everything else → **Off**
+   >
+   > Double-check that these two are **Off** before proceeding:
    > - ❌ **Orders — Execute**
    > - ❌ **Pies — Write**
    >
-   > ISA AI Analyst only reads your portfolio. Leaving these enabled means a compromised key could place real trades on your account.
+   > ISA AI Analyst only reads your portfolio. Leaving execute permissions on means a compromised key could place real trades on your account.
 
 <!-- SCREENSHOT: Trading 212 API permissions screen with Orders-Execute and Pies-Write unchecked -->
 <img src="docs/screenshots/t212-api-permissions.png" alt="Trading 212 API permissions — uncheck Orders Execute and Pies Write" width="400" />
@@ -239,6 +270,8 @@ This step is identical on both platforms. Work through each service in order and
 ---
 
 #### 💬 Telegram — Your Reporting Interface
+
+> 💡 We recommend doing this step on **Telegram Desktop** — it's much easier to copy tokens and IDs from a computer than a phone screen.
 
 1. Open Telegram and search for **@BotFather**
 2. Send `/newbot`, follow the prompts, and copy the **Bot Token**
@@ -289,8 +322,6 @@ Work through options **1 → 2 → 3 → 4** in order, pasting your API keys whe
 
 ### Step E — Pair Your Telegram Bot
 
-The analyst uses a zero-trust pairing system — it ignores all messages until you explicitly approve a one-time code. This prevents anyone who finds your bot's username from issuing commands to it.
-
 1. Open Telegram and search for your bot by the username you created with @BotFather
 2. Send any message — `hello` is fine
 3. The bot replies with a pairing code, for example:
@@ -313,6 +344,7 @@ Open Telegram and message your bot. Some useful prompts to get started:
 | Message | Action |
 |---|---|
 | `Run it now.` | Triggers an immediate portfolio analysis and report |
+| `What's the price of Vodafone?` | Fetches the latest price and news for that stock |
 | `Add Scottish Mortgage at 25%` | Resolves tickers automatically and adds to your portfolio |
 | `Show my portfolio` | Displays current allocations and unallocated percentage |
 | `What is my current schedule?` | Shows the configured report times |
@@ -327,27 +359,17 @@ Congratulations — ISA AI Analyst is now fully up and running!
 
 - ✅ A securely containerised AI analyst running entirely on your own machine
 - ✅ Read-only Trading 212 integration — no accidental trades are possible
-- ✅ Twice-daily portfolio analysis with 3-gate safety filtering and DCA logic
+- ✅ Morning briefing (08:30) and evening analysis (17:30) with 3-gate safety filtering and DCA logic
 - ✅ AI-powered financial news risk screening before every recommendation
+- ✅ On-demand price and news lookup via Telegram
 - ✅ Full natural language portfolio management via Telegram
 
-Your first scheduled report arrives at the next run time (default: 08:30 or 16:00 UK). Can't wait? Send **`Run it now.`** on Telegram for an immediate report.
+Your first scheduled report arrives at the next run time (default: 08:30 or 17:30 UK). Can't wait? Send **`Run it now.`** on Telegram for an immediate report.
 
 If you find ISA AI Analyst useful, please consider [⭐ starring the repository](https://github.com/ClementHa/isa-ai-analyst) — it helps others discover the project and keeps development going.
 
 ---
 
-## ⚠️ A Note on AI and Web Searches
-
-When you ask the analyst to look up information on your behalf — such as researching a company or checking news from the web — it may visit external pages. A technique known as **indirect prompt injection** means a malicious website could embed hidden instructions designed to manipulate the AI's response; for example, a rogue page could attempt to trick the analyst into recommending a trade it would not otherwise make.
-
-To stay safe:
-
-- Treat any web-assisted response with an extra layer of scepticism
-- Prefer asking the analyst to analyse data from its scheduled reports, rather than fetching information from arbitrary URLs
-- If a response seems out of character, discard it and use the [Emergency Reset](#-emergency-reset-nuke--restart) if needed
-
----
 
 ## 🍀 Good Luck & Support the Project
 
@@ -414,16 +436,16 @@ All variables are set via the setup script — this table is for reference only.
 
 ## 📉 EODHD Free Tier Limits
 
-EODHD's free plan includes **20 API calls per day**. Each stock analysis consumes calls as follows:
+EODHD's free plan includes **20 API calls per day**. Each stock analysis consumes:
 
 - **1 call** per stock for end-of-day price data (used for SMA and volatility calculations)
-- **5 calls** per stock for financial news scanning
+- **1 call** per stock for financial news headlines
 
-That's **6 calls per stock per report**. With the default twice-daily schedule, the free tier comfortably supports:
+That's **2 calls per stock per report**, or **4 calls per stock per day** across both reports. The free tier comfortably supports:
 
-> 🆓 **~3 stocks across your 2 daily reports** on the free plan.
+> 🆓 **Up to 5 stocks across your 2 daily reports** on the free plan.
 
-If you want to track more stocks or increase your report frequency, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
+On-demand price queries (via Telegram) use **2 additional calls** each (1 for live price + 1 for news), so frequent manual lookups will reduce the headroom for stocks. If you want to track more stocks or use price queries heavily, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
 
 ---
 
