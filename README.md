@@ -494,9 +494,6 @@ The pairing state is reset — redo [Step E](#step-e--pair-your-telegram-bot) on
 - Check your Docker host's system clock and timezone are correct
 - Test immediately with `Run it now.` in Telegram
 
-**Docker Desktop won't start on Apple Silicon (Mac)**
-- Install Rosetta 2: `softwareupdate --install-rosetta`
-
 **Docker Desktop won't start on Windows**
 - Restart your PC if you haven't since the Docker installation — Docker handles WSL2 automatically
 - If you still see a WSL error, open PowerShell as Administrator and run `wsl --install`, then restart
