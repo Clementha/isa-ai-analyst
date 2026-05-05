@@ -103,15 +103,14 @@ Rather than deploying capital in a single lump sum, ISA AI Analyst scales into p
 - [Security & Protection](#️-built-in-security--protection-layers)
 - [Prerequisites](#️-prerequisites)
 - [Quick Start](#-quick-start)
-- [Portfolio Config Reference](#-portfolio-config-reference)
-- [Environment Variable Reference](#-environment-variable-reference)
 - [EODHD Free Tier Limits](#-eodhd-free-tier-limits)
-- [Updating & Maintenance](#-updating--maintenance)
 - [Emergency Reset (Nuke & Restart)](#-emergency-reset-nuke--restart)
 - [Troubleshooting](#-troubleshooting)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
+
+> 🛠️ **Developers & power users:** see [ADVANCED.md](ADVANCED.md) for portfolio config reference, environment variables, running a local LLM (Ollama), and Git-based update instructions.
 - [Disclaimer](#️-disclaimer)
 - [Support the Project](#-good-luck--support-the-project)
 
@@ -430,55 +429,6 @@ Good luck out there. 📈
 
 ---
 
-## 📊 Portfolio Config Reference
-
-You do not need to edit this file manually. The analyst manages it for you via Telegram chat. It is documented here for reference.
-
-| Field | Type | Description |
-|---|---|---|
-| `isa_allowance_target` | `number` | Total ISA allowance for the tax year in GBP (e.g. `20000`) |
-| `target_cash_pct` | `number` | Fraction of portfolio to keep as cash reserve (e.g. `0.25` = 25%) |
-| `daily_dca_limit` | `number` | Maximum GBP to deploy per stock per day via DCA (e.g. `500`) |
-| `holdings` | `object` | Map of T212 ticker keys to EODHD ticker, display name, and target weight |
-
-**Example:**
-```json
-{
-  "isa_allowance_target": 20000,
-  "target_cash_pct": 0.25,
-  "daily_dca_limit": 500,
-  "holdings": {
-    "VOD_LSE_EQ": {
-      "eodhd_ticker": "VOD.LSE",
-      "name": "Vodafone Group PLC",
-      "target_weight": 0.25
-    }
-  }
-}
-```
-
-> ℹ️ Ticker symbols are resolved automatically when you add a stock via Telegram. You never need to look them up manually.
-
----
-
-## 🔑 Environment Variable Reference
-
-All variables are set via the setup script — this table is for reference only.
-
-| Variable | Required | Description |
-|---|---|---|
-| `LLM_BASE_URL` | ✅ | OpenAI-compatible endpoint (set automatically to OpenRouter) |
-| `LLM_MODEL` | ✅ | Model name (set automatically by setup) |
-| `LLM_API_KEY` | ✅ | Your OpenRouter API key |
-| `OPENROUTER_API_KEY` | ✅ | Same key — required by some OpenClaw internals |
-| `EODHD_API_KEY` | ✅ | Your EODHD market data API key |
-| `T212_KEY_ID` | ✅ | Your Trading 212 API Key ID |
-| `T212_SECRET` | ✅ | Your Trading 212 API Secret |
-| `TELEGRAM_BOT_TOKEN` | ✅ | Token from @BotFather |
-| `TELEGRAM_CHAT_ID` | ✅ | Your personal chat ID from @userinfobot |
-
----
-
 ## 📉 EODHD Free Tier Limits
 
 EODHD's free plan includes **20 API calls per day**. Each stock analysis consumes:
@@ -491,30 +441,6 @@ That's **2 calls per stock per report**, or **4 calls per stock per day** across
 > 🆓 **Up to 5 stocks across your 2 daily reports** on the free plan.
 
 On-demand price queries (via Telegram) use **2 additional calls** each (1 for live price + 1 for news), so frequent manual lookups will reduce the headroom for stocks. If you want to track more stocks or use price queries heavily, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
-
----
-
-## 🔄 Updating & Maintenance
-
-To pull the latest version and restart:
-
-```bash
-git pull origin main
-docker compose down
-docker compose up -d --build
-```
-
-To stop the analyst without removing configuration:
-
-| 🪟 Windows | 🍎 macOS / Linux |
-|---|---|
-| Run `setup.bat` → select option **7** | Run `bash setup.sh` → select option **7** |
-
-Or directly from any terminal:
-
-```bash
-docker compose stop
-```
 
 ---
 
@@ -628,14 +554,3 @@ This software is provided for **educational and informational purposes only**. I
 
 † No Docker container is a perfect security boundary. Containers share the host's network stack by default, meaning a severely compromised container could theoretically attempt to probe your host machine over the local Docker bridge network. ISA AI Analyst does not mount the Docker socket and does not run in privileged mode, which significantly limits the blast radius of any such attack. For the vast majority of users, the container isolation is more than sufficient — but it is not equivalent to a fully separate virtual machine.
 
----
-
-‡ **Advanced Users — Local LLM Support:** ISA AI Analyst supports running with a local LLM (e.g. via [Ollama](https://ollama.com/)), removing the need for an OpenRouter account or any AI API costs. This is intended for technically proficient users comfortable editing configuration files. After completing the setup script, open the `.env` file in the project folder and override these three variables:
-
-```env
-LLM_BASE_URL="http://host.docker.internal:11434/v1/chat/completions"
-LLM_MODEL="qwen2.5:32b"
-LLM_API_KEY="ollama"
-```
-
-Ensure Ollama is installed and running on your host machine with the target model already pulled (e.g. `ollama pull qwen2.5:32b`) before starting the bot. Any OpenAI-compatible local inference server can be used by adjusting `LLM_BASE_URL` and `LLM_MODEL` accordingly. The `Set AI API Key (OpenRouter)` step in the setup script can be skipped entirely if using this mode.
