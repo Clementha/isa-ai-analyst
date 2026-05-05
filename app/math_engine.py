@@ -16,10 +16,14 @@ if datetime.datetime.now().weekday() >= 5:
     print("🛑 Weekend detected. LSE Market is closed. Exiting.")
     sys.exit(0)
 
+# Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
+# Anything before 14:00 = morning briefing; 14:00+ = evening analysis.
+SESSION = sys.argv[1] if len(sys.argv) > 1 else ("evening" if datetime.datetime.now().hour >= 14 else "morning")
+
 # --- Helper function to manually read the .env file ---
 def get_secret(key):
     val = os.getenv(key)
-    if val: 
+    if val:
         return val
     try:
         with open('/app/.env', 'r') as f:
@@ -53,14 +57,14 @@ try:
         TARGET_WEIGHTS = config.get("holdings", {})
         TARGET_CASH_PCT = config.get("target_cash_pct", 0.25)
         ISA_ALLOWANCE = config.get("isa_allowance_target", 20000)
-        DAILY_DCA_LIMIT = config.get("daily_dca_limit", 500) 
+        DAILY_DCA_LIMIT = config.get("daily_dca_limit", 500)
 except Exception as e:
     print(f"❌ Failed to load {CONFIG_PATH}. Error: {e}")
     TARGET_WEIGHTS = {}
     TARGET_CASH_PCT = 0.25
     ISA_ALLOWANCE = 20000
     DAILY_DCA_LIMIT = 500
-    
+
 # --- DATA FETCHING ---
 def fetch_eodhd_data(symbol):
     url = f"https://eodhd.com/api/eod/{symbol}?api_token={EODHD_API_KEY}&fmt=json&period=d"
@@ -70,57 +74,68 @@ def fetch_eodhd_data(symbol):
         return []
 
 def fetch_news(symbol):
-    url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=3"
+    url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=5"
     try:
         news = requests.get(url).json()
-        # Clean up the ugly HTML entities before saving them
         return [html.unescape(article['title']) for article in news]
     except:
         return ["No recent news found."]
 
-def analyse_news_with_AI_model(symbol, news_list):
-    # If there is no news, skip the AI completely
+def fetch_realtime_price(symbol):
+    url = f"https://eodhd.com/api/real-time/{symbol}?api_token={EODHD_API_KEY}&fmt=json"
+    try:
+        resp = requests.get(url, timeout=5)
+        data = resp.json()
+        if isinstance(data, dict) and isinstance(data.get('close'), (int, float)):
+            return data
+        return None  # Free plan — endpoint not available
+    except:
+        return None
+
+def analyse_news_with_AI_model(name, news_list):
     if not news_list or "No recent news found" in news_list[0]:
         return "NO_NEWS"
-        
-    # STRICT CHECK: Fail loudly if the user forgot their config
+
     if not LLM_API_KEY or not LLM_BASE_URL:
-        print(f"⚠️ CONFIG ERROR: Missing LLM_API_KEY or LLM_BASE_URL in .env for {symbol}.")
+        print(f"⚠️ CONFIG ERROR: Missing LLM_API_KEY or LLM_BASE_URL in .env for {name}.")
         return "ERROR"
-        
+
     headers = {
         "Authorization": f"Bearer {LLM_API_KEY}",
         "Content-Type": "application/json"
     }
-    
-    prompt = f"You are a strict quantitative risk manager. Review these recent headlines for {symbol}. If they contain severe fundamental risks (fraud, lawsuits, bankruptcy, major downgrades), reply with the exact word 'FAIL'. If they are neutral, positive, or standard market noise, reply with the exact word 'PASS'.\n\nHeadlines:\n" + "\n".join(news_list)
-    
-    actual_model = LLM_MODEL.replace("openrouter/", "")
+
+    prompt = (
+        f"You are a strict quantitative risk manager for a capital-preservation-first ISA portfolio. "
+        f"Review these recent headlines for {name} (a UK-listed equity). "
+        f"Reply with the exact word 'FAIL' only if headlines indicate severe fundamental risks such as "
+        f"fraud, criminal investigations, bankruptcy, insolvency, major credit downgrades, or regulatory sanctions. "
+        f"Sector-wide macroeconomic concerns, routine earnings misses, or analyst target price changes do NOT warrant FAIL. "
+        f"Reply with the exact word 'PASS' for all other cases.\n\nHeadlines:\n"
+        + "\n".join(news_list)
+    )
+
+    actual_model = (LLM_MODEL or "").replace("openrouter/", "")
     payload = {
-        "model": actual_model, 
+        "model": actual_model,
         "messages": [{"role": "user", "content": prompt}]
     }
-    
+
     try:
-        # Added a 10-second timeout so a dead API doesn't freeze your bot forever
         resp = requests.post(LLM_BASE_URL, headers=headers, json=payload, timeout=10)
-        resp.raise_for_status() # Automatically triggers the Except block if the API returns a 400/500 error
-        
+        resp.raise_for_status()
         content = resp.json()['choices'][0]['message']['content'].strip().upper()
         return "FAIL" if "FAIL" in content else "PASS"
     except Exception as e:
-        print(f"❌ LLM API Error for {symbol}: {e}")
+        print(f"❌ LLM API Error for {name}: {e}")
         return "ERROR"
-
 
 def fetch_t212_portfolio():
     headers = {"Authorization": T212_AUTH_HEADER}
     try:
-        # Fetch actual cash and positions from Trading 212
         cash_resp = requests.get("https://live.trading212.com/api/v0/equity/account/cash", headers=headers).json()
         pos_resp = requests.get("https://live.trading212.com/api/v0/equity/portfolio", headers=headers).json()
-        
-        # Check if the API rejected our keys
+
         if 'code' in cash_resp and cash_resp['code'] == 'AuthenticationFailed':
             print("Trading 212 Auth Failed. Check your Key ID and Secret.")
             return 0, {}
@@ -128,7 +143,7 @@ def fetch_t212_portfolio():
         total_cash = cash_resp.get('total', 0)
         portfolio = {pos['ticker']: pos['currentValue'] for pos in pos_resp}
         total_invested = sum(portfolio.values())
-        
+
         return total_cash + total_invested, portfolio
     except Exception as e:
         print(f"Error connecting to Trading 212: {e}")
@@ -136,50 +151,49 @@ def fetch_t212_portfolio():
 
 # --- THE MATH ENGINE ---
 total_value, current_positions = fetch_t212_portfolio()
+today_str = datetime.datetime.now().strftime("%d %b %Y")
 
-# 1. Create a massive string to hold the entire report
-report_content = "=== 📊 DAILY PORTFOLIO REPORT ===\n\n"
-report_content += f"Total Value: £{total_value:.2f}\n"
-report_content += f"Target Cash: {TARGET_CASH_PCT * 100:.1f}%\n\n"
-report_content += "-" * 30 + "\n\n"
+if SESSION == "morning":
+    report_content = f"=== 🌅 MORNING BRIEFING ===\n"
+    report_content += f"{today_str} | Prices as of previous close\n\n"
+    report_content += f"Portfolio Value: £{total_value:.2f}\n"
+    report_content += "-" * 30 + "\n\n"
+else:
+    report_content = f"=== 📊 EVENING ANALYSIS ===\n"
+    report_content += f"{today_str} | Today's closing prices\n\n"
+    report_content += f"Total Value: £{total_value:.2f}\n"
+    report_content += f"Target Cash: {TARGET_CASH_PCT * 100:.1f}%\n\n"
+    report_content += "-" * 30 + "\n\n"
 
-# UPDATED: Iterate through the new nested JSON schema
 for t212_ticker, stock_data in TARGET_WEIGHTS.items():
     target_pct = stock_data.get("target_weight", 0)
     eodhd_ticker = stock_data.get("eodhd_ticker", "")
     name = stock_data.get("name", t212_ticker)
-    
-    # Fetch exact match from T212 portfolio using the explicit T212 ticker key
+
     current_value = current_positions.get(t212_ticker, 0)
-    
     current_pct = (current_value / total_value) * 100 if total_value > 0 else 0
     target_value = ISA_ALLOWANCE * target_pct
     delta_value = target_value - current_value
 
-    # UPDATED: Use the specific EODHD ticker for external API calls
     data = fetch_eodhd_data(eodhd_ticker)
     if not data or len(data) < 20:
         report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>\n"
-        report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
         report_content += "Signal: ⚠️ ERROR [Insufficient EODHD Data / Bad Ticker]\n\n"
         continue
-        
+
     closes = [float(day['close']) for day in data]
     latest = closes[-1]
     prev = closes[-2]
-    
-    # Fetch news using the EODHD ticker
+
     recent_news = fetch_news(eodhd_ticker)
     if not recent_news:
         recent_news = ["No recent news found."]
-    
-    # --- 1. EVALUATE THE 3 GATES ---
+
+    # --- EVALUATE THE 3 GATES ---
     sma_pass = latest > statistics.mean(closes)
     vol_pass = abs((latest - prev) / prev) * 100 < 5.0
-    
-    # Pass the readable name and news to the AI
     news_sentiment = analyse_news_with_AI_model(name, recent_news)
-    
+
     if news_sentiment == "NO_NEWS":
         news_pass = True
         news_icon = "🤷‍♂️"
@@ -187,59 +201,50 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         news_pass = False
         news_icon = "👎"
     elif news_sentiment == "ERROR":
-        news_pass = False 
+        news_pass = False
         news_icon = "⚠️"
     else:
         news_pass = True
         news_icon = "👍"
-    
-# --- 2. GENERATE TRADING SIGNAL ---
-    if sma_pass and vol_pass and news_pass:
-        signal_color = "🟢 GREEN" 
-        if delta_value > 50:
-            # DCA Logic: Take the smaller of the two numbers
-            buy_amount = min(delta_value, DAILY_DCA_LIMIT)
-            
-            if buy_amount < delta_value:
-                action = f"BUY £{buy_amount:.2f} (DCA mode, £{delta_value:.2f} total gap)"
-            else:
-                action = f"BUY £{buy_amount:.2f}"
-        else:
-            action = "HOLD (Near target)"
-    else:
-        signal_color = "🔴 RED" 
-        if current_value > 0:
-            action = f"SELL ALL £{current_value:.2f}"
-        else:
-            action = "AVOID"
 
     sma_icon = "👍" if sma_pass else "👎"
     vol_icon = "👍" if vol_pass else "👎"
+    all_green = sma_pass and vol_pass and news_pass
 
-    # --- 4. BUILD THE REPORT TEXT ---
-    # UPDATED: Display Name and both tickers for clarity
-    report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Price: {latest:.2f}\n"
-    report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
-    report_content += f"Signal: {signal_color} [{action}]\n"
-    report_content += f"Gates: SMA {sma_icon} | News {news_icon} | Volatility {vol_icon}\n"
-    
-    report_content += "Catalysts:\n"
+    if SESSION == "morning":
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Prev Close: £{latest:.2f}\n"
+        report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
+        report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
+        report_content += f"Outlook: {'🟢 GREEN' if all_green else '🔴 RISK FLAGGED'}\n"
+        report_content += "Overnight News:\n"
+    else:
+        if all_green:
+            signal_color = "🟢 GREEN"
+            if delta_value > 50:
+                buy_amount = min(delta_value, DAILY_DCA_LIMIT)
+                action = f"BUY £{buy_amount:.2f} (DCA mode, £{delta_value:.2f} total gap)" if buy_amount < delta_value else f"BUY £{buy_amount:.2f}"
+            else:
+                action = "HOLD (Near target)"
+        else:
+            signal_color = "🔴 RED"
+            action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
+
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f}\n"
+        report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
+        report_content += f"Signal: {signal_color} [{action}]\n"
+        report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
+        report_content += "Today's News:\n"
+
     for item in recent_news:
         report_content += f" - {item}\n"
     report_content += "\n"
 
-
-# --- ADD THE LEAN DISCLAIMER ---
 disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
 report_content += disclaimer_text
-# -------------------------------
 
-# 2. Print it to the terminal so you can still see it when testing
 print(report_content)
 
-# 3. SAVE IT TO THE HARD DRIVE FOR THE AI TO READ
 output_path = '/app/portfolio.md'
-
 try:
     with open(output_path, 'w', encoding='utf-8') as file:
         file.write(report_content)
@@ -247,29 +252,19 @@ try:
 except Exception as e:
     print(f"❌ Failed to save file: {e}")
 
-    # --- BYPASS OPENCLAW: SEND DIRECTLY TO TELEGRAM ---
-
-
-# Only attempt to send if the keys were successfully found in the .env file
 if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    
-    # We use json=payload instead of data=payload to ensure the formatting stays clean
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": report_content,
         "parse_mode": "HTML"
     }
-
     try:
         response = requests.post(telegram_url, json=payload)
-        
-        # Check if Telegram accepted the message
         if response.status_code == 200:
             print("✅ Successfully pushed report directly to Telegram!")
         else:
             print(f"❌ Telegram rejected the message: {response.text}")
-            
     except Exception as e:
         print(f"❌ Failed to connect to Telegram: {e}")
 else:
