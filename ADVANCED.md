@@ -187,7 +187,17 @@ docker compose down
 docker compose up -d --build
 ```
 
-To stop the analyst without removing configuration:
+The `--build` flag forces Docker to rebuild the image with the updated code. Wait for the logs to show the agent is running before using Telegram:
+
+```bash
+docker compose logs -f
+```
+
+Press `Ctrl+C` to stop following the logs once you see the agent is ready.
+
+### Stopping the Bot
+
+To stop the analyst without removing any configuration or data:
 
 | 🪟 Windows | 🍎 macOS / Linux |
 |---|---|
@@ -198,3 +208,15 @@ Or from any terminal:
 ```bash
 docker compose stop
 ```
+
+### Restarting After a Stop
+
+To bring the bot back up after a `stop` (no rebuild needed — your data is intact):
+
+```bash
+docker compose start
+```
+
+Or use the setup script (option **6 — Start Agent**) on either platform.
+
+> ℹ️ Use `docker compose stop` / `start` for routine on/off. Use `docker compose down` / `up -d --build` only when you've pulled an update or want a clean restart.
