@@ -339,17 +339,62 @@ The bot confirms the connection and is ready.
 
 ### Step F — Talk to Your Analyst
 
-Open Telegram and message your bot. Some useful prompts to get started:
+Open Telegram and message your bot. ISA AI Analyst isn't just a timer that fires off a report twice a day — it's a full conversational AI agent. You can talk to it exactly as you would talk to a real analyst.
 
-| Message | Action |
+#### ⚡ Quick Commands
+
+| Message | What it does |
 |---|---|
 | `Run it now.` | Triggers an immediate portfolio analysis and report |
 | `What's the price of Vodafone?` | Fetches the latest price and news for that stock |
-| `Add Scottish Mortgage at 25%` | Resolves tickers automatically and adds to your portfolio |
 | `Show my portfolio` | Displays current allocations and unallocated percentage |
 | `What is my current schedule?` | Shows the configured report times |
+| `Add Scottish Mortgage at 25%` | Resolves tickers automatically and adds to your portfolio |
+| `Remove Vodafone` | Removes a stock from your portfolio targets |
+| `Change Vodafone to 20%` | Adjusts a stock's target allocation |
 | `Set my DCA limit to £300` | Updates your daily DCA cap |
+| `Set my ISA allowance to £20000` | Updates your total ISA target |
+| `Set cash reserve to 20%` | Adjusts the cash buffer percentage |
 | `Pause reporting.` | Suspends automatic daily reports |
+
+#### 💬 Ask It Anything — It Thinks Like an Analyst
+
+The command table above barely scratches the surface. Here are some examples of the kinds of conversations you can have:
+
+---
+
+**Research a stock before adding it:**
+> *"Can you analyse the recent news for Tesla and tell me if it would pass your risk checks before I officially add it to my portfolio?"*
+
+The analyst fetches live news for any ticker you mention, runs it through the same three safety gates it applies to your existing stocks, and gives you a clear pass/fail with reasoning — in seconds. No need to spend an hour trawling news sites.
+
+---
+
+**Understand the reasoning behind a recommendation:**
+> *"Can you explain what a Simple Moving Average is, and why you refuse to buy stocks that are trading below it?"*
+
+You're not expected to just accept the recommendations blindly. Ask it to explain any decision it makes, and it will give you a clear, jargon-free answer. Particularly useful if you're newer to investing and want to build your understanding alongside your portfolio.
+
+---
+
+**Interrogate your own numbers:**
+> *"How much of my £20,000 ISA allowance is currently deployed into the market versus sitting in cash?"*
+
+It already knows your portfolio inside out — your allocations, targets, and cash reserve. No spreadsheet, no mental arithmetic. Just ask.
+
+---
+
+**Challenge a signal:**
+> *"The report says SELL on Scottish Mortgage — but I think the news is just noise. Walk me through your reasoning."*
+
+The analyst will explain which gate failed and why. You can push back, ask follow-up questions, and make your own call. It's a tool, not an oracle.
+
+---
+
+**Sanity-check a rebalance:**
+> *"If I add 15% in Legal & General, what percentage would I have left unallocated across the rest of the portfolio?"*
+
+It'll do the portfolio maths for you instantly and flag if you'd be over-allocating before you commit to anything.
 
 ---
 
