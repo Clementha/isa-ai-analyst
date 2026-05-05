@@ -68,11 +68,14 @@ If the user asks "What is my schedule?", "When are my reports?", or asks about r
 2. Reply by listing the exact times and actions found in that file.
 
 If the user asks to change the schedule, add a new report, or update times, use your file-writing tool to OVERWRITE `/root/.openclaw/workspace/HEARTBEAT.md` with this exact template:
-# HEARTBEAT.md - Daily Reports
-## [TIME 1] - Portfolio Check
-- Check Portfolio
-## [TIME 2] - Portfolio Check
-- Check Portfolio
+# HEARTBEAT.md - Scheduler Configuration
+
+Automated reports are triggered by the Python scheduler at these times:
+
+- [TIME 1]
+- [TIME 2]
+
+The scheduler handles all execution automatically. During heartbeat checks, reply HEARTBEAT_OK unless the user has sent a specific message requiring your attention. Do NOT run the math engine on heartbeat.
 
 # MANUAL EXECUTION (STRICT TRIGGER)
 CRITICAL: You are strictly forbidden from running the math engine during general conversation, hypothetical risk analysis, or when drafting JSON updates. 
