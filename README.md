@@ -37,8 +37,8 @@ Holding: 21.3% (£4,260.00) → Target: 25%
 Gates: SMA 👍 | Vol 👍 | News 👍
 Outlook: 🟢 GREEN
 Overnight News:
- - Vodafone completes network expansion deal with BT
- - Analysts raise price target following dividend confirmation
+ - [05 May] Vodafone completes network expansion deal with BT
+ - [04 May] Analysts raise price target following dividend confirmation
 ```
 
 **Evening Analysis (17:30)** — actionable recommendations using today's confirmed closing prices:
@@ -56,9 +56,9 @@ Target: 25% (£5,000.00) | Current: 21.1% (£4,280.00)
 Signal: 🟢 GREEN [BUY £500.00 (DCA mode, £720.00 total gap)]
 Gates: SMA 👍 | Vol 👍 | News 👍
 Today's News:
- - Vodafone completes network expansion deal with BT
- - Analysts raise price target following dividend confirmation
- - Telecoms sector outperforms FTSE 100 for third consecutive week
+ - [06 May] Vodafone completes network expansion deal with BT
+ - [04 May] Analysts raise price target following dividend confirmation
+ - [03 May] Telecoms sector outperforms FTSE 100 for third consecutive week
 ```
 
 ### Reading the Report
@@ -86,7 +86,7 @@ Before issuing any BUY recommendation, the analyst requires a stock to pass **th
 |---|---|---|
 | **Trend** | Current price must be above the Simple Moving Average (SMA) | Avoids buying into a confirmed downtrend |
 | **Volatility** | Daily volatility must be strictly under 5% | Avoids entering during high-turbulence periods where price swings are driven by noise rather than fundamentals |
-| **News** | AI scans recent headlines and blocks entry if severe fundamental risks are detected (fraud, lawsuits, profit warnings, regulatory action) | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
+| **News** | AI scans recent headlines and summaries (with publication dates) and blocks entry if severe fundamental risks are detected (fraud, lawsuits, profit warnings, regulatory action) | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
 
 All three gates must be green simultaneously. One red gate = no recommendation.
 
@@ -143,7 +143,7 @@ You can also chat with the analyst at any time in plain English to update your p
 | 🌅 **Two-Format Reports** | Morning briefing for pre-market context; evening analysis with confirmed closing prices and DCA recommendations |
 | 🛡️ **3-Gate Safety Filter** | Every BUY signal must pass trend, volatility, and AI news checks before being recommended |
 | 📉 **DCA Engine** | Scales into positions gradually up to a daily limit — no lump-sum exposure |
-| 📰 **AI News Risk Manager** | Scans up to 5 headlines per stock and blocks recommendations if severe fundamental risks are detected |
+| 📰 **AI News Risk Manager** | Scans up to 5 headlines and summaries per stock (with dates) and blocks recommendations if severe fundamental risks are detected |
 | 🔒 **Fail-Secure Architecture** | If the market is closed or an API goes down, the analyst safely skips execution |
 | 📱 **Telegram Integration** | Reports pushed straight to your phone, with instant price and news lookup on demand |
 | 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, change your schedule, or request a price check |
@@ -219,7 +219,7 @@ This step is identical on both platforms. Work through each service in order and
 
 1. Sign up at **[openrouter.ai](https://openrouter.ai)** and verify your email
 2. > ⚠️ **Before adding any credit:** go to **Settings → Credits** and make sure **Auto top-up is OFF**. This prevents unexpected charges.
-3. Add credit — **US$5 is typically enough for a full year** of regular usage, though this depends on your chosen model and how often you run manual queries.
+3. Add credit — for a typical portfolio, expect around **US$4–5 per month** of regular usage. Start with US$10–20 to avoid topping up frequently.
 4. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
 5. Copy the key
 

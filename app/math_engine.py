@@ -77,9 +77,21 @@ def fetch_news(symbol):
     url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=5"
     try:
         news = requests.get(url).json()
-        return [html.unescape(article['title']) for article in news]
+        items = []
+        for article in news:
+            raw_date = article.get('date', '')
+            try:
+                date_str = datetime.datetime.fromisoformat(raw_date.replace('Z', '+00:00')).strftime('%d %b')
+            except Exception:
+                date_str = raw_date[:10] if raw_date else '?'
+            items.append({
+                "date": date_str,
+                "title": html.unescape(article.get('title', '')),
+                "summary": html.unescape(article.get('content', '') or '')
+            })
+        return items
     except:
-        return ["No recent news found."]
+        return []
 
 def fetch_realtime_price(symbol):
     url = f"https://eodhd.com/api/real-time/{symbol}?api_token={EODHD_API_KEY}&fmt=json"
@@ -92,8 +104,8 @@ def fetch_realtime_price(symbol):
     except:
         return None
 
-def analyse_news_with_AI_model(name, news_list):
-    if not news_list or "No recent news found" in news_list[0]:
+def analyse_news_with_AI_model(name, news_items):
+    if not news_items:
         return "NO_NEWS"
 
     if not LLM_API_KEY or not LLM_BASE_URL:
@@ -105,14 +117,19 @@ def analyse_news_with_AI_model(name, news_list):
         "Content-Type": "application/json"
     }
 
+    formatted_news = "\n".join(
+        f"[{item['date']}] {item['title']}" + (f"\n  {item['summary']}" if item['summary'] else "")
+        for item in news_items
+    )
+
     prompt = (
         f"You are a strict quantitative risk manager for a capital-preservation-first ISA portfolio. "
-        f"Review these recent headlines for {name} (a UK-listed equity). "
-        f"Reply with the exact word 'FAIL' only if headlines indicate severe fundamental risks such as "
+        f"Review these recent news items for {name} (a UK-listed equity). "
+        f"Reply with the exact word 'FAIL' only if the news indicates severe fundamental risks such as "
         f"fraud, criminal investigations, bankruptcy, insolvency, major credit downgrades, or regulatory sanctions. "
         f"Sector-wide macroeconomic concerns, routine earnings misses, or analyst target price changes do NOT warrant FAIL. "
-        f"Reply with the exact word 'PASS' for all other cases.\n\nHeadlines:\n"
-        + "\n".join(news_list)
+        f"Reply with the exact word 'PASS' for all other cases.\n\nNews items:\n"
+        + formatted_news
     )
 
     actual_model = (LLM_MODEL or "").replace("openrouter/", "")
@@ -192,8 +209,6 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         price_date = raw_date
 
     recent_news = fetch_news(eodhd_ticker)
-    if not recent_news:
-        recent_news = ["No recent news found."]
 
     # --- EVALUATE THE 3 GATES ---
     sma_pass = latest > statistics.mean(closes)
@@ -241,8 +256,11 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
         report_content += "Today's News:\n"
 
-    for item in recent_news:
-        report_content += f" - {item}\n"
+    if recent_news:
+        for item in recent_news:
+            report_content += f" - [{item['date']}] {item['title']}\n"
+    else:
+        report_content += " - No recent news found.\n"
     report_content += "\n"
 
 disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
