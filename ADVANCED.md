@@ -8,7 +8,8 @@ This guide is for developers and technically confident users who want to go beyo
 
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Environment Variable Reference](#-environment-variable-reference)
-- [Running with a Local LLM (Ollama)](#-running-with-a-local-llm-ollama)
+- [The AI Model](#-the-ai-model)
+- [Running Costs](#-running-costs)
 - [Updating & Maintenance](#-updating--maintenance)
 
 ---
@@ -62,64 +63,71 @@ All variables live in the `.env` file in the project root. The setup script writ
 
 ---
 
-## 🤖 Running with a Local LLM (Ollama)
+## 🤖 The AI Model
 
-ISA AI Analyst supports running with a **local LLM** via [Ollama](https://ollama.com/) or any other OpenAI-compatible inference server. This removes the need for an OpenRouter account entirely and eliminates AI API costs.
+ISA AI Analyst uses **[Grok 4.1 Fast](https://openrouter.ai/x-ai/grok-4.1-fast) via OpenRouter** as its AI engine. This model was chosen because it is fast, cost-efficient, and specifically designed for agentic workloads — handling the conversational interface, news risk analysis, and ticker resolution reliably at a low cost (~US$4–5/month for typical usage).
 
-### Step 1 — Install Ollama
-
-Download and install Ollama from [ollama.com](https://ollama.com/). It runs on macOS, Windows, and Linux.
-
-### Step 2 — Pull a model
-
-Open a terminal and pull a capable model. A 32B parameter model gives results closest to the hosted version:
-
-```bash
-ollama pull qwen2.5:32b
-```
-
-For machines with less RAM (< 16 GB), a smaller model works but may produce less nuanced news risk analysis:
-
-```bash
-ollama pull qwen2.5:7b
-```
-
-Verify Ollama is running:
-
-```bash
-ollama list
-```
-
-### Step 3 — Edit your `.env` file
-
-Open the `.env` file in the project folder in any text editor and override these three variables:
+To switch to a different model available on OpenRouter, update these two variables in your `.env` file:
 
 ```env
-LLM_BASE_URL="http://host.docker.internal:11434/v1/chat/completions"
-LLM_MODEL="qwen2.5:32b"
-LLM_API_KEY="ollama"
+LLM_MODEL="your-chosen-model-id"
+LLM_API_KEY="your-openrouter-key"
 ```
 
-> ℹ️ `host.docker.internal` is how Docker containers reach services running on your host machine. This works on macOS and Windows out of the box. On Linux, you may need to add `--add-host=host.docker.internal:host-gateway` to your Docker run command or use your host's actual LAN IP instead.
+Browse available models at [openrouter.ai/models](https://openrouter.ai/models). Note that more capable models (e.g. GPT-4o, Claude) are available via OpenRouter but will be significantly more expensive.
 
-### Step 4 — Restart the container
+---
+
+## 💸 Running Costs
+
+### API Costs
+
+The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$4/month using Grok 4.1 Fast).
+
+Advanced users who want a leaner setup — pure scheduled reports with no proactive agent features — can reduce or disable this cadence:
 
 ```bash
-docker compose down
-docker compose up -d --build
+# Reduce heartbeat to every 2 hours
+openclaw config set heartbeat.cadence "120"
+
+# Disable entirely
+openclaw config set heartbeat.cadence "0"
 ```
 
-The `Set AI API Key (OpenRouter)` step in the setup script can be skipped entirely when using a local model.
+> ⚠️ **Disabling the heartbeat removes all proactive OpenClaw agent capabilities** — email check-ins, calendar reminders, and any other background monitoring tasks you may have configured. If you are using the bot purely for ISA reports and nothing else, this is safe to do. If you plan to extend it with other agent features, leave it enabled.
 
-### Using other OpenAI-compatible servers
+The report generation itself (the two daily analysis runs) costs a small fraction of the total — roughly US$0.001 per report.
 
-Any OpenAI-compatible inference server works. Adjust `LLM_BASE_URL` and `LLM_MODEL` to match your server's endpoint and model name. Examples:
+---
 
-| Server | `LLM_BASE_URL` | `LLM_MODEL` |
+### Hardware & Electricity
+
+The ISA AI Analyst runs as a lightweight Docker container — it uses very little CPU and barely any memory when idle. Any modern Windows or Mac computer will run it fine.
+
+However, if you plan to run it **24/7 as an always-on home server**, hardware choice has a meaningful impact on your electricity bill:
+
+| Device | Architecture | Avg. watts | Electricity cost (UK, per year) |
+|---|---|---|---|
+| **Mac mini M4** ⭐ | ARM64 (Apple Silicon) | ~10W | **~£24/yr** |
+| Intel NUC 13 Pro | x86-64 | ~20W | ~£47/yr |
+| Standard desktop PC | x86-64 | ~100W | ~£237/yr |
+| Gaming/high-end PC | x86-64 | ~200W | ~£473/yr |
+
+> Electricity cost calculated at UK average rate of ~27p/kWh, continuous 24/7 operation.
+
+The **Mac mini M4** (from ~£650) idles at just **4W** — making it the ideal dedicated host for this project. Over 3 years, the electricity savings versus a standard desktop PC (~£639) effectively pay for the hardware itself.
+
+### Minimum Requirements
+
+| | Windows | macOS |
 |---|---|---|
-| Ollama | `http://host.docker.internal:11434/v1/chat/completions` | `qwen2.5:32b` |
-| LM Studio | `http://host.docker.internal:1234/v1/chat/completions` | your loaded model name |
-| vLLM | your server's endpoint | your deployed model name |
+| **OS** | Windows 10/11 (64-bit) | macOS 12 Monterey or later |
+| **CPU** | x86-64 (Intel or AMD) | Apple Silicon or Intel |
+| **RAM** | 8 GB minimum, 16 GB recommended | 8 GB minimum |
+| **Storage** | 10 GB free | 10 GB free |
+| **Required** | Docker Desktop + WSL2 | Docker Desktop |
+
+> **Windows users:** Download Docker Desktop for **AMD64** — this covers both Intel and AMD processors. Only select ARM64 if you have a Qualcomm Snapdragon device (e.g. Surface Pro X).
 
 ---
 
