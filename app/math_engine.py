@@ -258,7 +258,7 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
 
     if recent_news:
         for item in recent_news:
-            report_content += f" - [{item['date']}] {item['title']}\n"
+            report_content += f" - [{item['date']}] {html.escape(item['title'])}\n"
     else:
         report_content += " - No recent news found.\n"
     report_content += "\n"
