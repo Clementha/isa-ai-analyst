@@ -76,7 +76,14 @@ def fetch_eodhd_data(symbol):
 def fetch_news(symbol):
     url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=5"
     try:
-        news = requests.get(url).json()
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            print(f"⚠️ EODHD news error for {symbol}: HTTP {resp.status_code} — {resp.text[:100]}")
+            return None  # API error — distinct from genuine no-news
+        news = resp.json()
+        if not isinstance(news, list):
+            print(f"⚠️ EODHD news unexpected response for {symbol}: {str(news)[:100]}")
+            return None
         items = []
         for article in news:
             raw_date = article.get('date', '')
@@ -89,9 +96,10 @@ def fetch_news(symbol):
                 "title": html.unescape(article.get('title', '')),
                 "summary": html.unescape(article.get('content', '') or '')
             })
-        return items
-    except:
-        return []
+        return items  # [] means genuinely no news, None means error
+    except Exception as e:
+        print(f"⚠️ EODHD news exception for {symbol}: {e}")
+        return None
 
 def fetch_realtime_price(symbol):
     url = f"https://eodhd.com/api/real-time/{symbol}?api_token={EODHD_API_KEY}&fmt=json"
@@ -105,7 +113,9 @@ def fetch_realtime_price(symbol):
         return None
 
 def analyse_news_with_AI_model(name, news_items):
-    if not news_items:
+    if news_items is None:
+        return "ERROR"
+    if len(news_items) == 0:
         return "NO_NEWS"
 
     if not LLM_API_KEY or not LLM_BASE_URL:
@@ -256,11 +266,13 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         report_content += f"Gates: SMA {sma_icon} | Vol {vol_icon} | News {news_icon}\n"
         report_content += "Today's News:\n"
 
-    if recent_news:
+    if recent_news is None:
+        report_content += " - ⚠️ News fetch failed (API error or quota exceeded).\n"
+    elif len(recent_news) == 0:
+        report_content += " - No recent news found.\n"
+    else:
         for item in recent_news:
             report_content += f" - [{item['date']}] {html.escape(item['title'])}\n"
-    else:
-        report_content += " - No recent news found.\n"
     report_content += "\n"
 
 disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
