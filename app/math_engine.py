@@ -11,11 +11,6 @@ import html
 import datetime
 import sys
 
-# 🛑 WEEKEND CHECK: 0=Mon, 1=Tue, ..., 5=Sat, 6=Sun
-if datetime.datetime.now().weekday() >= 5:
-    print("🛑 Weekend detected. LSE Market is closed. Exiting.")
-    sys.exit(0)
-
 # Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
 # Anything before 14:00 = morning briefing; 14:00+ = evening analysis.
 SESSION = sys.argv[1] if len(sys.argv) > 1 else ("evening" if datetime.datetime.now().hour >= 14 else "morning")
