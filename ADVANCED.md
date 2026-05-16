@@ -65,7 +65,7 @@ All variables live in the `.env` file in the project root. The setup script writ
 
 ## 🤖 The AI Model
 
-ISA AI Analyst uses **[Grok 4.1 Fast](https://openrouter.ai/x-ai/grok-4.1-fast) via OpenRouter** as its AI engine. This model was chosen because it is fast, cost-efficient, and specifically designed for agentic workloads — handling the conversational interface, news risk analysis, and ticker resolution reliably at a low cost (~US$4–5/month for typical usage).
+ISA AI Analyst uses **[GPT-4o mini](https://openrouter.ai/openai/gpt-4o-mini) via OpenRouter** as its AI engine. This model was chosen for its reliability, strong instruction-following, and long-term support commitment from OpenAI — handling the conversational interface, news risk analysis, and ticker resolution at a low cost (~US$3–4/month for typical usage).
 
 To switch to a different model available on OpenRouter, update these two variables in your `.env` file:
 

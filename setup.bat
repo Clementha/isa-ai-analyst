@@ -5,7 +5,7 @@
 @echo off
 setlocal
 
-set DEFAULT_LLM_MODEL=openrouter/x-ai/grok-4.1-fast
+set DEFAULT_LLM_MODEL=openrouter/openai/gpt-4o-mini
 
 if not exist .env type nul > .env
 

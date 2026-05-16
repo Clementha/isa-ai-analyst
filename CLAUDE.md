@@ -62,7 +62,7 @@ All three gates must be GREEN simultaneously (AND logic, not OR). One red = no b
 T212_KEY_ID / T212_SECRET        Trading 212 API (read-only)
 EODHD_API_KEY                    Market data + news
 LLM_API_KEY / OPENROUTER_API_KEY OpenRouter (same key, both required)
-LLM_MODEL                        e.g. openrouter/x-ai/grok-4.1-fast
+LLM_MODEL                        e.g. openrouter/openai/gpt-4o-mini
 LLM_BASE_URL                     OpenRouter endpoint
 TELEGRAM_BOT_TOKEN               From @BotFather
 TELEGRAM_CHAT_ID                 User's personal chat ID

@@ -13,7 +13,7 @@ RESET="\033[0m"
 GREY="\033[90m"
 
 # Single Source of Truth for the default model
-DEFAULT_LLM_MODEL="openrouter/x-ai/grok-4.1-fast"
+DEFAULT_LLM_MODEL="openrouter/openai/gpt-4o-mini"
 
 show_menu() {
     clear
