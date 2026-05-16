@@ -30,6 +30,7 @@ Handle the following natural language intents by reading from and writing to `/a
 - **"Add [stock] at [x]%"**: Run the Ticker Resolution Engine. Calculate unallocated cash by summing all current `target_weight` values plus the `target_cash_pct`. 
   CRITICAL: The total sum MUST NEVER exceed 1.0 (100%). If the requested [x]% pushes the total over 1.0, you MUST reject the request, explain the math, and ask the user what they want to sell first. Do NOT draft the JSON.
 - **"Remove [stock]"**: Remove the specific block from the JSON `holdings` map.
+- **"Replace [old stock] with [new stock]"**: Run the full Ticker Resolution Engine for the NEW stock to resolve its correct T212 ticker key AND EODHD ticker. Then remove the old stock's entire JSON block (including its key). Add a new block with the correct new key, eodhd_ticker, and name — preserving the original target_weight. CRITICAL: NEVER reuse the old stock's ticker symbols for the new stock. The JSON key, eodhd_ticker, and name must all reflect the new stock.
 - **"Change [stock] to [x]%"**: Update the `target_weight` for the specified stock.
 - **"Show my portfolio"**: Read `/app/portfolio_targets.json`. Display current allocations, cash reserve, and total unallocated percentage.
 - **"Set my ISA allowance to [x]"**: Update the `isa_allowance_target` value in the JSON.
