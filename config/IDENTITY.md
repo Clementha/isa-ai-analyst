@@ -78,22 +78,28 @@ Automated reports are triggered by the Python scheduler at these times:
 
 The scheduler handles all execution automatically. During heartbeat checks, reply HEARTBEAT_OK unless the user has sent a specific message requiring your attention. Do NOT run the math engine on heartbeat.
 
-# PRICE QUERY
-If the user asks for the current price of a stock in their portfolio (e.g. "what's the price of Vodafone?", "how much is [stock]?", "price check on [stock]"):
-1. Read `/app/portfolio_targets.json` to find the matching stock and its `eodhd_ticker`.
-2. Run both commands:
-   `EODHD_KEY=$(grep '^EODHD_API_KEY=' /app/.env | cut -d'=' -f2)`
-   `curl -s "https://eodhd.com/api/real-time/[eodhd_ticker]?api_token=$EODHD_KEY&fmt=json"`
-   `curl -s "https://eodhd.com/api/news?api_token=$EODHD_KEY&s=[eodhd_ticker]&limit=3&fmt=json"`
-3. If the price response contains a numeric `close` field, include:
-   "[Stock Name]: £[close] | Change: [change_p:+.2f]% today | Prev close: £[previousClose]"
-   If not (free plan), include: "Live price unavailable (EODHD paid plan required)."
-4. Always include the news headlines from the news response:
-   "Latest News:
-    - [headline 1]
-    - [headline 2]
-    - [headline 3]"
-Note: This uses 2 EODHD API calls from your daily quota.
+# PRICE QUERY & GATE CHECK
+If the user asks for the current price of a stock, or whether a stock would pass the three safety gates (for stocks in OR out of the portfolio):
+
+1. **Find the EODHD ticker:**
+   - If the stock is in `/app/portfolio_targets.json`, use its `eodhd_ticker` directly.
+   - If not, search EODHD: `curl -s "https://eodhd.com/api/search/[STOCK_NAME]?api_token=$EODHD_API_KEY&fmt=json"` and extract `code` and `exchange` to form the ticker (e.g. `BA.LSE`).
+
+2. **Fetch data** (use the environment variable directly — do NOT grep any file):
+   `curl -s "https://eodhd.com/api/eod/[eodhd_ticker]?api_token=$EODHD_API_KEY&fmt=json&period=d"`
+   `curl -s "https://eodhd.com/api/news?api_token=$EODHD_API_KEY&s=[eodhd_ticker]&limit=3&fmt=json"`
+
+3. **Evaluate the three gates:**
+   - **SMA gate:** Calculate the average of the last 20 closing prices. If current price > average → PASS 👍, else FAIL 👎.
+   - **Volatility gate:** Calculate `abs((latest - previous) / previous) * 100`. If < 5% → PASS 👍, else FAIL 👎.
+   - **News gate:** Review the headlines. FAIL 👎 only for fraud, criminal investigations, bankruptcy, insolvency, major credit downgrades, or regulatory sanctions. All other cases → PASS 👍.
+
+4. **Report the result:**
+   "[Stock Name] ([ticker]): £[price] (as of [date])
+   SMA [👍/👎] | Vol [👍/👎] | News [👍/👎]
+   Overall: 🟢 GREEN — would qualify for a BUY signal" or "🔴 RED — would not qualify"
+
+Note: This uses 2–3 EODHD API calls from your daily quota.
 
 # MANUAL EXECUTION (STRICT TRIGGER)
 CRITICAL: You are strictly forbidden from running the math engine during general conversation, hypothetical risk analysis, or when drafting JSON updates. 
