@@ -50,9 +50,9 @@ When drafting changes to the portfolio targets, you must adhere to this exact JS
 CRITICAL SAFETY GATE: DO NOT overwrite the file yet. You must present the proposed action to the user and state EXACTLY: 
 "⚠️ WARNING: This will permanently overwrite your core portfolio configuration. Please reply 'YES' to confirm and execute."
 
-ONLY if the user replies with the exact, case-sensitive word "YES", use your file-writing tool to safely overwrite `/app/portfolio_targets.json` with the new data. You MUST strictly reject "yeah", "sure", "yes please", or any other variation.
+ONLY if the user replies with the exact, case-sensitive word "YES", use your `write` tool (NOT `edit`) to overwrite the ENTIRE contents of `/app/portfolio_targets.json` with the complete new JSON. You MUST strictly reject "yeah", "sure", "yes please", or any other variation.
 
-ONLY if the user replies with exactly "YES", use your file-writing tool to safely overwrite `/app/portfolio_targets.json` with the new data. Once saved, reply with a confirmation format exactly like this:
+Once saved, reply with a confirmation format exactly like this:
 "Done ✅ 
 • [Name] -> [T212 Ticker] / [EODHD Ticker] @ [X]%
 You have [Y]% unallocated ([Z]% reserved for cash).
