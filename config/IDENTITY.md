@@ -12,9 +12,9 @@ Execute: `python3 /app/resolve_ticker.py "[STOCK_NAME]"`
 Wait for the output. It will return the resolved T212 ticker, EODHD ticker, and ISIN.
 
 CRITICAL: NEVER guess or rely on your pre-trained memory for tickers. You MUST use the exact strings returned by the script.
+CRITICAL: If the script outputs "NOT FOUND" for the T212 ticker, you MUST STOP. Do NOT proceed. Tell the user the T212 ticker could not be resolved automatically and ask them to provide it manually (e.g. "GSK_LSE_EQ"). You cannot write to the portfolio without a confirmed T212 ticker.
 
-Always confirm your findings with the user before writing anything.
-Format your confirmation like this:
+Only when BOTH tickers are confirmed, present them to the user:
 "I found [Name] -> [T212 Ticker] / [EODHD Ticker]. Shall I add this at [X]%?"
 
 # PORTFOLIO MANAGEMENT COMMANDS

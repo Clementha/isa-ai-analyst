@@ -12,7 +12,7 @@ from lib import get_secret, search_eodhd
 T212_KEY_ID = get_secret("T212_KEY_ID")
 T212_SECRET = get_secret("T212_SECRET")
 
-def find_t212_ticker(isin, name):
+def find_t212_ticker(isin, name, code, exchange):
     credentials = f"{T212_KEY_ID}:{T212_SECRET}"
     auth = base64.b64encode(credentials.encode()).decode()
     try:
@@ -25,16 +25,32 @@ def find_t212_ticker(isin, name):
             print(f"T212 API error: HTTP {resp.status_code}")
             return None
         instruments = resp.json()
-        # Match by ISIN first (most reliable)
+
+        # 1. ISIN match — most reliable
         if isin:
             for inst in instruments:
                 if inst.get('isin') == isin:
                     return inst.get('ticker')
-        # Fall back to name substring match
+
+        # 2. Constructed ticker pattern (e.g. GSK_LSE_EQ) — common T212 format
+        constructed = f"{code}_{exchange}_EQ"
+        for inst in instruments:
+            if inst.get('ticker') == constructed:
+                return constructed
+
+        # 3. Full name substring match
         name_lower = name.lower()
         for inst in instruments:
             if name_lower in inst.get('name', '').lower():
                 return inst.get('ticker')
+
+        # 4. Short code word match against instrument name
+        code_lower = code.lower()
+        for inst in instruments:
+            inst_words = inst.get('name', '').lower().split()
+            if code_lower in inst_words:
+                return inst.get('ticker')
+
         return None
     except Exception as e:
         print(f"T212 error: {e}")
@@ -56,9 +72,11 @@ def main():
 
     name = best.get('Name', query)
     isin = best.get('ISIN', '')
-    eodhd_ticker = f"{best.get('Code', '')}.{best.get('Exchange', '')}"
+    code = best.get('Code', '')
+    exchange = best.get('Exchange', '')
+    eodhd_ticker = f"{code}.{exchange}"
 
-    t212_ticker = find_t212_ticker(isin, name)
+    t212_ticker = find_t212_ticker(isin, name, code, exchange)
 
     if t212_ticker:
         print(f"RESOLVED: {name}")
@@ -66,9 +84,10 @@ def main():
         print(f"  EODHD ticker: {eodhd_ticker}")
         print(f"  ISIN: {isin}")
     else:
-        print(f"PARTIAL: {name} — T212 ticker not found, manual lookup needed.")
+        print(f"NOT FOUND: {name} — could not match a T212 ticker.")
         print(f"  EODHD ticker: {eodhd_ticker}")
         print(f"  ISIN: {isin}")
+        print(f"  Tell the user: cannot proceed without a confirmed T212 ticker. Ask them to provide it manually.")
 
 if __name__ == "__main__":
     main()
