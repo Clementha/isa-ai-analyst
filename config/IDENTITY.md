@@ -23,9 +23,12 @@ Handle the following natural language intents by reading from and writing to `/a
 - **"Add [stock] at [x]%"**: Run the Ticker Resolution Engine. Calculate unallocated cash by summing all current `target_weight` values plus the `target_cash_pct`. 
   CRITICAL: The total sum MUST NEVER exceed 1.0 (100%). If the requested [x]% pushes the total over 1.0, you MUST reject the request, explain the math, and ask the user what they want to sell first. Do NOT draft the JSON.
 - **"Remove [stock]"**: Remove the specific block from the JSON `holdings` map.
-- **"Replace [old stock] with [new stock]"**: Run the full Ticker Resolution Engine for the NEW stock. Then confirm with the user BEFORE drafting any JSON, using this exact format:
-  "I found [New Name] -> [New T212 Ticker] / [New EODHD Ticker]. This will replace [Old Name] at [X]%. Shall I proceed?"
-  Only after the user confirms: remove the old stock's entire JSON block (including its key) and add a new block with the correct new key, eodhd_ticker, and name — preserving the original target_weight. CRITICAL: NEVER reuse the old stock's ticker symbols for the new stock. The JSON key, eodhd_ticker, and name must all reflect the new stock.
+- **"Replace [old stock] with [new stock]"**: 
+  STEP 1 — Run `python3 /app/resolve_ticker.py "[NEW stock name]"` ONLY. Do NOT resolve the old stock — it is already in the portfolio.
+  STEP 2 — Read `/app/portfolio_targets.json` to find the old stock's current target_weight.
+  STEP 3 — Confirm with the user BEFORE drafting any JSON:
+  "I found [New Name] -> [New T212 Ticker] / [New EODHD Ticker]. This will replace [Old Name] (currently at [X]%). Shall I proceed?"
+  STEP 4 — Only after the user confirms: remove the old stock's entire JSON block and add a new block using the new stock's tickers, preserving the original target_weight. CRITICAL: NEVER reuse the old stock's ticker symbols. The JSON key, eodhd_ticker, and name must all reflect the new stock.
 - **"Change [stock] to [x]%"**: Update the `target_weight` for the specified stock.
 - **"Show my portfolio"**: Read `/app/portfolio_targets.json`. Display current allocations, cash reserve, and total unallocated percentage.
 - **"Set my ISA allowance to [x]"**: Update the `isa_allowance_target` value in the JSON.
