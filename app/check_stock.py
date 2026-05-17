@@ -6,17 +6,8 @@
 # Usage: python3 /app/check_stock.py "BAE Systems"
 #    or: python3 /app/check_stock.py "BA.LSE"
 import sys
-import requests
 import datetime
-from lib import fetch_eod_data, fetch_news, evaluate_gates, EODHD_API_KEY
-
-def search_eodhd(query):
-    url = f"https://eodhd.com/api/search/{query}?api_token={EODHD_API_KEY}&fmt=json"
-    try:
-        resp = requests.get(url, timeout=10)
-        return resp.json() if resp.status_code == 200 else []
-    except Exception:
-        return []
+from lib import search_eodhd, fetch_eod_data, fetch_news, evaluate_gates
 
 def main():
     query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else ""

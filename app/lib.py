@@ -26,6 +26,14 @@ LLM_API_KEY = get_secret("LLM_API_KEY")
 LLM_BASE_URL = get_secret("LLM_BASE_URL")
 LLM_MODEL = get_secret("LLM_MODEL")
 
+def search_eodhd(query):
+    url = f"https://eodhd.com/api/search/{query}?api_token={EODHD_API_KEY}&fmt=json"
+    try:
+        resp = requests.get(url, timeout=10)
+        return resp.json() if resp.status_code == 200 else []
+    except Exception:
+        return []
+
 def fetch_eod_data(symbol):
     url = f"https://eodhd.com/api/eod/{symbol}?api_token={EODHD_API_KEY}&fmt=json&period=d"
     try:
