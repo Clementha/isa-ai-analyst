@@ -249,8 +249,7 @@ This step is identical on both platforms. Work through each service in order and
    >
    > ISA AI Analyst only reads your portfolio and market metadata. Leaving execute permissions on means a compromised key could place real trades on your account.
 
-<!-- SCREENSHOT: Trading 212 API permissions screen with Orders-Execute and Pies-Write unchecked -->
-<img src="docs/screenshots/t212-api-permissions.png" alt="Trading 212 API permissions — uncheck Orders Execute and Pies Write" width="400" />
+<img src="docs/screenshots/t212-api-permissions.png" alt="Trading 212 API permissions — Account data, Metadata, and Portfolio checked; all others off" width="400" />
 
 5. Copy both the **Key ID** and **Secret Key** immediately — the Secret is shown only once.
 
