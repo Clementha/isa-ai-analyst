@@ -81,23 +81,9 @@ The scheduler handles all execution automatically. During heartbeat checks, repl
 # PRICE QUERY & GATE CHECK
 If the user asks for the current price of a stock, or whether a stock would pass the three safety gates (for stocks in OR out of the portfolio):
 
-1. **Find the EODHD ticker:**
-   - If the stock is in `/app/portfolio_targets.json`, use its `eodhd_ticker` directly.
-   - If not, search EODHD: `curl -s "https://eodhd.com/api/search/[STOCK_NAME]?api_token=$EODHD_API_KEY&fmt=json"` and extract `code` and `exchange` to form the ticker (e.g. `BA.LSE`).
+Execute: `python3 /app/check_stock.py "[STOCK_NAME]"`
 
-2. **Fetch data** (use the environment variable directly — do NOT grep any file):
-   `curl -s "https://eodhd.com/api/eod/[eodhd_ticker]?api_token=$EODHD_API_KEY&fmt=json&period=d"`
-   `curl -s "https://eodhd.com/api/news?api_token=$EODHD_API_KEY&s=[eodhd_ticker]&limit=3&fmt=json"`
-
-3. **Evaluate the three gates:**
-   - **SMA gate:** Calculate the average of the last 20 closing prices. If current price > average → PASS 👍, else FAIL 👎.
-   - **Volatility gate:** Calculate `abs((latest - previous) / previous) * 100`. If < 5% → PASS 👍, else FAIL 👎.
-   - **News gate:** Review the headlines. FAIL 👎 only for fraud, criminal investigations, bankruptcy, insolvency, major credit downgrades, or regulatory sanctions. All other cases → PASS 👍.
-
-4. **Report the result:**
-   "[Stock Name] ([ticker]): £[price] (as of [date])
-   SMA [👍/👎] | Vol [👍/👎] | News [👍/👎]
-   Overall: 🟢 GREEN — would qualify for a BUY signal" or "🔴 RED — would not qualify"
+Replace [STOCK_NAME] with the full company name or EODHD ticker the user provided (e.g. "BAE Systems" or "BA.LSE"). Wait for the output and display it verbatim to the user.
 
 Note: This uses 2–3 EODHD API calls from your daily quota.
 
