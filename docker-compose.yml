@@ -15,9 +15,10 @@ services:
       - OPENROUTER_API_KEY=${LLM_API_KEY}
     volumes:
       - ./app:/app
+      - ./config:/app/config
       # This is the magic bullet. It saves the entire configuration to your Mac forever.
       - ./openclaw_data:/root/.openclaw
-      
+
     # Look how clean this is now. No hacks, no delays. Just install and run.
     command: >
-      sh -c 'apt-get update && apt-get install -y python3 python3-pip ca-certificates && pip3 install requests schedule --break-system-packages && npm install -g openclaw@2026.3.28 && cp /app/config/IDENTITY.md /root/.openclaw/workspace/IDENTITY.md && (python3 /app/scheduler.py &) && openclaw gateway --allow-unconfigured'
+      sh -c 'apt-get update && apt-get install -y python3 python3-pip ca-certificates && pip3 install requests schedule --break-system-packages && npm install -g openclaw@2026.3.28 && (cp /app/config/IDENTITY.md /root/.openclaw/workspace/IDENTITY.md || true) && (python3 /app/scheduler.py &) && openclaw gateway --allow-unconfigured'
