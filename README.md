@@ -239,6 +239,7 @@ This step is identical on both platforms. Work through each service in order and
 
    > 🔒 **Critical — set permissions carefully on the next screen:**
    > - ✅ Turn **Account data** → **On**
+   > - ✅ Turn **Metadata** → **On** *(required for automatic ticker resolution when adding stocks)*
    > - ✅ Turn **Portfolio** → **On**
    > - Everything else → **Off**
    >
@@ -246,7 +247,7 @@ This step is identical on both platforms. Work through each service in order and
    > - ❌ **Orders — Execute**
    > - ❌ **Pies — Write**
    >
-   > ISA AI Analyst only reads your portfolio. Leaving execute permissions on means a compromised key could place real trades on your account.
+   > ISA AI Analyst only reads your portfolio and market metadata. Leaving execute permissions on means a compromised key could place real trades on your account.
 
 <!-- SCREENSHOT: Trading 212 API permissions screen with Orders-Execute and Pies-Write unchecked -->
 <img src="docs/screenshots/t212-api-permissions.png" alt="Trading 212 API permissions — uncheck Orders Execute and Pies Write" width="400" />

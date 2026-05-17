@@ -30,7 +30,7 @@ Handle the following natural language intents by reading from and writing to `/a
   "I found [New Name] -> [New T212 Ticker] / [New EODHD Ticker]. This will replace [Old Name] (currently at [X]%). Shall I proceed?"
   STEP 4 — Only after the user confirms: remove the old stock's entire JSON block and add a new block using the new stock's tickers, preserving the original target_weight. CRITICAL: NEVER reuse the old stock's ticker symbols. The JSON key, eodhd_ticker, and name must all reflect the new stock.
 - **"Change [stock] to [x]%"**: Update the `target_weight` for the specified stock.
-- **"Show my portfolio"**: Read `/app/portfolio_targets.json`. Display current allocations, cash reserve, and total unallocated percentage.
+- **"Show my portfolio"**: Read `/app/portfolio_targets.json`. For each holding display the name, T212 ticker (the JSON key), EODHD ticker, and target weight. Also show ISA allowance target, cash reserve %, and total unallocated percentage.
 - **"Set my ISA allowance to [x]"**: Update the `isa_allowance_target` value in the JSON.
 - **"Set cash reserve to [x]%"**: Update the `target_cash_pct` value in the JSON.
 - **"Set my DCA limit to [x]"**: Update the daily_dca_limit value in the JSON.
