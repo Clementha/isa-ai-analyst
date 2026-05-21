@@ -147,7 +147,7 @@ You can also chat with the analyst at any time in plain English to update your p
 | 🔒 **Fail-Secure Architecture** | If the market is closed or an API goes down, the analyst safely skips execution |
 | 📱 **Telegram Integration** | Reports pushed straight to your phone, with instant price and news lookup on demand |
 | 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, change your schedule, or request a price check |
-| 🔎 **Auto Ticker Resolution** | Tell the bot a stock name — it resolves the correct T212 and EODHD ticker symbols automatically |
+| 🔎 **Auto Ticker Resolution** | Tell the bot a stock name — it resolves the correct T212 and EODHD ticker symbols automatically via EODHD search with T212 metadata fallback (works on the EODHD free tier) |
 
 ---
 
@@ -394,7 +394,7 @@ The analyst will explain which gate failed and why. You can push back, ask follo
 **Sanity-check a rebalance:**
 > *"If I add 15% in Legal & General, what percentage would I have left unallocated across the rest of the portfolio?"*
 
-It'll do the portfolio maths for you instantly and flag if you'd be over-allocating before you commit to anything.
+It'll do the portfolio maths for you instantly — accounting for your cash reserve separately from truly unallocated headroom — and flag if you'd be over-allocating before you commit to anything.
 
 ---
 
@@ -442,6 +442,8 @@ That's **2 calls per stock per report**, or **4 calls per stock per day** across
 > 🆓 **Up to 5 stocks across your 2 daily reports** on the free plan.
 
 On-demand price queries (via Telegram) use **2 additional calls** each (1 for live price + 1 for news), so frequent manual lookups will reduce the headroom for stocks. If you want to track more stocks or use price queries heavily, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
+
+> ℹ️ **Adding stocks does not consume EODHD quota.** The `Add [stock]` command resolves tickers using the Trading 212 instruments list as its primary source. EODHD search is used if available, but the bot falls back to T212 metadata automatically — so ticker resolution works fully on the free tier.
 
 ---
 

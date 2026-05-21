@@ -5,7 +5,7 @@
 @echo off
 setlocal
 
-set DEFAULT_LLM_MODEL=openrouter/openai/gpt-4o-mini
+set DEFAULT_LLM_MODEL=openrouter/anthropic/claude-haiku-4-5
 
 if not exist .env type nul > .env
 
