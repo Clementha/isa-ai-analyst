@@ -13,7 +13,7 @@ RESET="\033[0m"
 GREY="\033[90m"
 
 # Single Source of Truth for the default model
-DEFAULT_LLM_MODEL="openrouter/openai/gpt-4o-mini"
+DEFAULT_LLM_MODEL="openrouter/anthropic/claude-haiku-4-5"
 
 show_menu() {
     clear
