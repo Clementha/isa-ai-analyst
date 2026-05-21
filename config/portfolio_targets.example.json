@@ -1,6 +1,7 @@
 {
   "isa_allowance_target": 20000,
-  "target_cash_pct": 0.50,
+  "target_cash_pct": 0.25,
+  "daily_dca_limit": 500,
   "holdings": {
     "VOD_LSE_EQ": {
       "eodhd_ticker": "VOD.LSE",

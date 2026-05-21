@@ -8,7 +8,8 @@ This guide is for developers and technically confident users who want to go beyo
 
 - [Portfolio Config Reference](#-portfolio-config-reference)
 - [Environment Variable Reference](#-environment-variable-reference)
-- [The AI Model](#-the-ai-model)
+- [Choosing a brain for your bot](#-choosing-a-brain-for-your-bot)
+- [Trading 212 Account Type](#-trading-212-account-type)
 - [Running Costs](#-running-costs)
 - [Updating & Maintenance](#-updating--maintenance)
 
@@ -63,18 +64,47 @@ All variables live in the `.env` file in the project root. The setup script writ
 
 ---
 
-## 🤖 The AI Model
+## 🏦 Trading 212 Account Type
 
-ISA AI Analyst uses **[GPT-4o mini](https://openrouter.ai/openai/gpt-4o-mini) via OpenRouter** as its AI engine. This model was chosen for its reliability, strong instruction-following, and long-term support commitment from OpenAI — handling the conversational interface, news risk analysis, and ticker resolution at a low cost (~US$3–4/month for typical usage).
+The setup guide recommends using a **STOCKS ISA** account on Trading 212 — this is the intended account type for this bot, and the one it has been tested with.
 
-To switch to a different model available on OpenRouter, update these two variables in your `.env` file:
+Advanced users may choose to point the bot at a different T212 account type (e.g. **Invest** — a general investment account). The trick is straightforward: when you generate your API key inside the Trading 212 app, generate it from within the account you want the bot to manage. The API key is scoped to the account it was created in.
+
+Simply paste the corresponding API key during setup (option **2** on `setup.bat`) and the bot will read positions and cash from that account instead.
+
+> ⚠️ **Tax implications vary by account type.** The ISA wrapper gives you tax-free gains. A general Invest account does not. The bot's analysis and recommendations are the same either way — but ensure you understand the tax treatment of the account you are using before trading.
+
+---
+
+## 🤖 Choosing a brain for your bot
+
+ISA AI Analyst uses **[Claude Haiku 4.5](https://openrouter.ai/anthropic/claude-haiku-4-5) via OpenRouter** as its AI engine. This model was chosen for its speed, strong instruction-following, and cost-effectiveness — handling the conversational interface, news risk analysis, and ticker resolution at a low cost (~US$2–3/month for typical usage).
+
+To switch to a different model available on OpenRouter:
+
+**1.** Edit your `.env` file and update the model variable:
 
 ```env
 LLM_MODEL="your-chosen-model-id"
-LLM_API_KEY="your-openrouter-key"
 ```
 
-Browse available models at [openrouter.ai/models](https://openrouter.ai/models). Note that more capable models (e.g. GPT-4o, Claude) are available via OpenRouter but will be significantly more expensive.
+Browse available models at [openrouter.ai/models](https://openrouter.ai/models).
+
+**2.** Apply the new model to the OpenClaw conversational agent by running this command in any terminal:
+
+```bash
+docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "your-chosen-model-id"
+```
+
+**3.** Restart the bot to pick up both changes:
+
+```bash
+docker compose restart
+```
+
+> **Note:** You can also run **option 5 (Run Initial Setup)** on `setup.bat` to re-apply the default model (Claude Haiku 4.5) if you want to reset to the tested configuration.
+
+> ⚠️ **Switching to a different model is untested.** The prompts, safety filters, and conversational flows have been tuned specifically for Claude Haiku 4.5. Other models — even capable ones like GPT-4o or Claude Opus — may behave differently, misinterpret commands, or produce unexpected output. If you choose to experiment, you are on your own. The setup script will always restore Claude Haiku 4.5 if you re-run option 5.
 
 ---
 
@@ -82,9 +112,11 @@ Browse available models at [openrouter.ai/models](https://openrouter.ai/models).
 
 ### API Costs
 
-The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$4/month using Grok 4.1 Fast).
+The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$2–3/month).
 
-Advanced users who want a leaner setup — pure scheduled reports with no proactive agent features — can reduce or disable this cadence:
+We deliberately kept the heartbeat enabled. OpenClaw is an open platform, and the heartbeat is what makes it possible to build future capabilities on top of this bot — things like email check-ins, proactive alerts, or custom commands you define yourself. If you plan to extend the bot beyond scheduled ISA reports, the heartbeat is what makes that possible.
+
+That said, advanced users who prefer a leaner setup — pure scheduled reports with no proactive agent features — can reduce or disable this cadence:
 
 ```bash
 # Reduce heartbeat to every 2 hours
@@ -104,7 +136,9 @@ The report generation itself (the two daily analysis runs) costs a small fractio
 
 The ISA AI Analyst runs as a lightweight Docker container — it uses very little CPU and barely any memory when idle. Any modern Windows or Mac computer will run it fine.
 
-However, if you plan to run it **24/7 as an always-on home server**, hardware choice has a meaningful impact on your electricity bill:
+> ⚠️ **The bot only works while your machine is awake.** If your computer is sleeping at 08:30 or 17:30, that report is missed entirely. Make sure your machine is set to stay awake during the scheduled report windows, or configure it to never sleep while Docker is running. This is one of the key motivations behind the [planned cloud service](#️-managed-cloud-service) in the Roadmap.
+
+If you plan to run it **24/7 as an always-on home server**, hardware choice has a meaningful impact on your electricity bill:
 
 | Device | Architecture | Avg. watts | Electricity cost (UK, per year) |
 |---|---|---|---|
@@ -133,6 +167,8 @@ The **Mac mini M4** (from ~£650) idles at just **4W** — making it the ideal d
 
 ## 🔄 Updating & Maintenance
 
+> ℹ️ **Folder name:** When downloaded from GitHub as a ZIP, the project extracts as `isa-ai-analyst-main`. All commands below use this name — do not rename the folder.
+
 ### First-Time Git Setup — Windows
 
 If you installed ISA AI Analyst via ZIP download and want to receive future updates automatically, you'll need to set up Git first.
@@ -144,7 +180,7 @@ Download from [git-scm.com/download/win](https://git-scm.com/download/win) and r
 **2. Open Git Bash** (installed with Git) or **PowerShell**, navigate to your project folder, and initialise Git:
 
 ```bash
-cd C:\Users\YourName\Documents\isa-ai-analyst
+cd C:\Users\YourName\Documents\isa-ai-analyst-main
 git init
 git remote add origin https://github.com/Clementha/isa-ai-analyst.git
 git fetch origin
@@ -167,7 +203,7 @@ Git is pre-installed on macOS. If you installed via ZIP and want to pull future 
 **1. Open Terminal**, navigate to your project folder, and initialise Git:
 
 ```bash
-cd ~/Documents/isa-ai-analyst
+cd ~/Documents/isa-ai-analyst-main
 git init
 git remote add origin https://github.com/Clementha/isa-ai-analyst.git
 git fetch origin
@@ -228,3 +264,12 @@ docker compose start
 Or use the setup script (option **6 — Start Agent**) on either platform.
 
 > ℹ️ Use `docker compose stop` / `start` for routine on/off. Use `docker compose down` / `up -d --build` only when you've pulled an update or want a clean restart.
+
+Some changes require a full rebuild rather than a plain `start`. For example, if you edited `app/math_engine.py`, modified `requirements.txt`, or changed the `Dockerfile`, Docker needs to bake those changes into a new image:
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+A plain `docker compose start` after a `stop` reuses the existing image — it will not pick up any changes to Python source files or dependencies.

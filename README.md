@@ -20,9 +20,6 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 *The analyst delivers two reports per day — a morning briefing and an evening analysis:*
 
-<!-- SCREENSHOT: Example Telegram report output showing portfolio analysis, trade suggestions, and news risk summary -->
-<img src="docs/screenshots/telegram-report-example.png" alt="Example ISA AI Analyst Telegram report" width="500" />
-
 **Morning Briefing (08:30)** — pre-market context based on the previous close:
 
 ```
@@ -176,6 +173,10 @@ That's it. The setup script handles all configuration — no code editor require
 
 ## 🚀 Quick Start
 
+> 📺 **Prefer to watch?** The full setup walkthrough is on YouTube:
+>
+> [![Build a Free AI Stock Analyst for Your ISA - Complete Setup Guide](https://img.youtube.com/vi/y36PGM1wl34/maxresdefault.jpg)](https://youtu.be/y36PGM1wl34)
+
 The setup process is the same on both platforms — the only differences are how you get the files and how you launch the setup script.
 
 ---
@@ -187,7 +188,7 @@ The setup process is the same on both platforms — the only differences are how
 | 1. Click the green **Code** button at the top of this page | 1. Click the green **Code** button at the top of this page |
 | 2. Select **Download ZIP** | 2. Select **Download ZIP** |
 | 3. Right-click the ZIP → **Extract All…** | 3. Double-click the ZIP to extract it |
-| 4. Extract to: `C:\Users\YourName\Documents\isa-ai-analyst` | 4. Move the extracted folder to your **Documents** folder |
+| 4. Extract to: `C:\Users\YourName\Documents\` — the folder will be named `isa-ai-analyst-main` | 4. Move the extracted folder (`isa-ai-analyst-main`) to your **Documents** folder |
 
 > **Linux users:** Install [Docker Engine](https://docs.docker.com/engine/install/), extract the ZIP, then run `bash setup.sh`.
 
@@ -223,9 +224,6 @@ This step is identical on both platforms. Work through each service in order and
 4. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
 5. Copy the key
 
-<!-- SCREENSHOT: OpenRouter dashboard showing the Keys page with Create Key button highlighted -->
-<img src="docs/screenshots/openrouter-create-key.png" alt="OpenRouter API key creation" width="600" />
-
 > ℹ️ Set a hard **spending limit** in Billing as an extra safeguard against runaway usage.
 
 ---
@@ -233,7 +231,7 @@ This step is identical on both platforms. Work through each service in order and
 #### 🏦 Trading 212 — Your ISA Broker
 
 1. Sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
-2. Select **Stocks ISA** and complete identity verification
+2. Select **STOCKS ISA** and complete identity verification
 3. Deposit at least **£1** — the API option won't appear until the account is funded
 4. Go to **Settings → API (Beta) → Generate API Key**
 
@@ -249,8 +247,6 @@ This step is identical on both platforms. Work through each service in order and
    >
    > ISA AI Analyst only reads your portfolio and market metadata. Leaving execute permissions on means a compromised key could place real trades on your account.
 
-<img src="docs/screenshots/t212-api-permissions.png" alt="Trading 212 API permissions — Account data, Metadata, and Portfolio checked; all others off" width="400" />
-
 5. Copy both the **Key ID** and **Secret Key** immediately — the Secret is shown only once.
 
 ---
@@ -260,9 +256,6 @@ This step is identical on both platforms. Work through each service in order and
 1. Sign up: **[Create EODHD Account](https://eodhd.com?via=clementha)**
 2. Go to your **Dashboard** — your API token is shown at the top
 3. Copy the token
-
-<!-- SCREENSHOT: EODHD dashboard showing the API token field highlighted at the top -->
-<img src="docs/screenshots/eodhd-api-token.png" alt="EODHD dashboard API token location" width="600" />
 
 > ℹ️ **Free tier limits apply** — see [EODHD Free Tier Limits](#-eodhd-free-tier-limits) for details.
 
@@ -284,7 +277,7 @@ Make sure **Docker Desktop is open and running**, then launch the setup script:
 
 | 🪟 Windows | 🍎 macOS |
 |---|---|
-| Navigate to your `Documents\isa-ai-analyst` folder in File Explorer | Open **Terminal** and `cd` to the project folder |
+| Navigate to your `Documents\isa-ai-analyst-main` folder in File Explorer | Open **Terminal** and `cd` to the project folder (`cd ~/Documents/isa-ai-analyst-main`) |
 | **Double-click `setup.bat`** | Run `bash setup.sh` |
 | *(Or open PowerShell, `cd` to the folder, and run `setup.bat`)* | |
 
@@ -355,6 +348,8 @@ Open Telegram and message your bot. ISA AI Analyst isn't just a timer that fires
 | `Set my ISA allowance to £20000` | Updates your total ISA target |
 | `Set cash reserve to 20%` | Adjusts the cash buffer percentage |
 | `Pause reporting.` | Suspends automatic daily reports |
+
+> ℹ️ **Cash reserve default:** When the bot first writes your portfolio file it uses **25% as the default cash reserve**. You can adjust this at any time — for example, send `Set cash reserve to 10%` to deploy more of your ISA into stocks, or `Set cash reserve to 50%` to keep half in cash while you build your positions gradually.
 
 #### 💬 Ask It Anything — It Thinks Like an Analyst
 
