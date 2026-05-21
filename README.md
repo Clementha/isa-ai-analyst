@@ -175,7 +175,7 @@ That's it. The setup script handles all configuration — no code editor require
 
 > 📺 **Prefer to watch?** The full setup walkthrough is on YouTube:
 >
-> [![Build a Free AI Stock Analyst for Your ISA - Complete Setup Guide](https://img.youtube.com/vi/y36PGM1wl34/maxresdefault.jpg)](https://youtu.be/y36PGM1wl34)
+> [![Build a Free AI Stock Analyst for Your ISA - Complete Setup Guide](https://img.youtube.com/vi/y36PGM1wl34/hqdefault.jpg)](https://youtu.be/y36PGM1wl34)
 
 The setup process is the same on both platforms — the only differences are how you get the files and how you launch the setup script.
 
