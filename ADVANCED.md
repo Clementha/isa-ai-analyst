@@ -11,6 +11,7 @@ This guide is for developers and technically confident users who want to go beyo
 - [Choosing a brain for your bot](#-choosing-a-brain-for-your-bot)
 - [Trading 212 Account Type](#-trading-212-account-type)
 - [Running Costs](#-running-costs)
+- [Reliability & Auto-Restart](#-reliability--auto-restart)
 - [Updating & Maintenance](#-updating--maintenance)
 
 ---
@@ -162,6 +163,48 @@ The **Mac mini M4** (from ~£650) idles at just **4W** — making it the ideal d
 | **Required** | Docker Desktop + WSL2 | Docker Desktop |
 
 > **Windows users:** Download Docker Desktop for **AMD64** — this covers both Intel and AMD processors. Only select ARM64 if you have a Qualcomm Snapdragon device (e.g. Surface Pro X).
+
+---
+
+## 🔁 Reliability & Auto-Restart
+
+### What happens when your machine reboots
+
+The bot runs inside a Docker container with `restart: unless-stopped`. This means Docker will automatically restart the container if it crashes or exits unexpectedly — **but only while Docker Desktop itself is running.**
+
+If your machine reboots (for example, due to an automatic macOS or Windows update overnight), Docker Desktop does not start on its own unless you have configured it to. Until you log in and Docker Desktop launches, the container stays down — and any scheduled reports in that window are missed.
+
+This is exactly what happens with a Mac that installs an update overnight: the machine reboots at, say, 01:00, Docker Desktop never starts, and the 08:30 morning report is silently skipped.
+
+### Fix: make Docker Desktop start at login
+
+Configuring Docker Desktop to launch automatically when you log in is the simplest way to recover from unplanned reboots. Once Docker Desktop is running, the `restart: unless-stopped` policy takes care of the container automatically.
+
+**macOS:**
+
+1. Open **Docker Desktop**
+2. Click the Docker icon in the menu bar → **Settings** (or Preferences)
+3. Go to **General**
+4. Enable **Start Docker Desktop when you log in**
+5. Click **Apply & Restart**
+
+**Windows:**
+
+1. Open **Docker Desktop**
+2. Click the gear icon (Settings) in the top right
+3. Go to **General**
+4. Enable **Start Docker Desktop when you log in**
+5. Click **Apply & Restart**
+
+> ℹ️ With this setting on, the typical recovery path after an unplanned reboot is: machine reboots → you log in → Docker Desktop starts → container restarts automatically within ~60 seconds. No manual intervention needed beyond logging in.
+
+### The remaining limitation
+
+Docker Desktop requires an active user session — it is a desktop application, not a background service. Even with "Start at login" enabled, **the container will not restart until someone logs in to the machine.** If your machine reboots at night due to an update and you don't log in until the following afternoon, any morning reports in between are lost.
+
+This is a fundamental constraint of running the bot on a personal computer. The only way to eliminate it entirely is to run the bot on a server or cloud instance that never reboots unattended — which is the motivation behind the planned managed cloud service in the Roadmap.
+
+**Practical advice:** Check your OS update settings and configure automatic updates to install during a window when your machine is already on and you are logged in — for example, weekday afternoons rather than overnight.
 
 ---
 
