@@ -1,3 +1,5 @@
+← [Back to README](README.md)
+
 # Advanced Configuration & Maintenance
 
 This guide is for developers and technically confident users who want to go beyond the setup script — editing configuration files directly, running a local AI model, or managing updates via Git.
@@ -11,6 +13,7 @@ This guide is for developers and technically confident users who want to go beyo
 - [Choosing a brain for your bot](#-choosing-a-brain-for-your-bot)
 - [Trading 212 Account Type](#-trading-212-account-type)
 - [Running Costs](#-running-costs)
+- [Minimum Requirements](#minimum-requirements)
 - [Reliability & Auto-Restart](#-reliability--auto-restart)
 - [Updating & Maintenance](#-updating--maintenance)
 
@@ -79,14 +82,14 @@ Simply paste the corresponding API key during setup (option **2** on `setup.bat`
 
 ## 🤖 Choosing a brain for your bot
 
-ISA AI Analyst uses **[Claude Haiku 4.5](https://openrouter.ai/anthropic/claude-haiku-4-5) via OpenRouter** as its AI engine. This model was chosen for its speed, strong instruction-following, and cost-effectiveness — handling the conversational interface, news risk analysis, and ticker resolution at a low cost (~US$2–3/month for typical usage).
+ISA AI Analyst uses **[Claude Haiku 4.5](https://openrouter.ai/anthropic/claude-haiku-4-5) via OpenRouter** as its AI engine. This model was chosen for its speed, strong instruction-following, and cost-effectiveness — handling the conversational interface, news risk analysis, and ticker resolution.
 
 To switch to a different model available on OpenRouter:
 
 **1.** Edit your `.env` file and update the model variable:
 
 ```env
-LLM_MODEL="your-chosen-model-id"
+LLM_MODEL=openrouter/anthropic/claude-haiku-4-5
 ```
 
 Browse available models at [openrouter.ai/models](https://openrouter.ai/models).
@@ -113,7 +116,7 @@ docker compose restart
 
 ### API Costs
 
-The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$2–3/month).
+The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$4–5/month for typical usage — see the [README](README.md#-running-costs) for a full breakdown).
 
 We deliberately kept the heartbeat enabled. OpenClaw is an open platform, and the heartbeat is what makes it possible to build future capabilities on top of this bot — things like email check-ins, proactive alerts, or custom commands you define yourself. If you plan to extend the bot beyond scheduled ISA reports, the heartbeat is what makes that possible.
 
@@ -227,7 +230,7 @@ cd C:\Users\YourName\Documents\isa-ai-analyst-main
 git init
 git remote add origin https://github.com/Clementha/isa-ai-analyst.git
 git fetch origin
-git checkout main
+git reset --hard origin/main
 ```
 
 **3. Configure your Git identity** (required for Git to work):
@@ -250,7 +253,7 @@ cd ~/Documents/isa-ai-analyst-main
 git init
 git remote add origin https://github.com/Clementha/isa-ai-analyst.git
 git fetch origin
-git checkout main
+git reset --hard origin/main
 ```
 
 **2. Configure your Git identity:**
