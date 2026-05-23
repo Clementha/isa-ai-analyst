@@ -1,6 +1,8 @@
 # 📈 ISA AI Analyst
 
-> Your always-on ISA analyst. Invest with confidence.
+> Free AI analyst for UK ISA accounts. Runs in an isolated Docker container — sandboxed from your files, programs, and OS. Twice-daily portfolio screening with plain-English Telegram reports.
+
+Built by Clement — ex-big tech engineer, AI enthusiast, and firm believer that powerful tools should be free for everyone — as part of the [AI with Clement](https://www.youtube.com/@AIwithClement) YouTube channel.
 
 ISA AI Analyst is an autonomous, AI-powered **investment analyst** built specifically for **UK Tax-Free ISA accounts**. Think of it as a helpful data assistant that works quietly in the background — analysing your portfolio every day, screening financial news for risk, and delivering clear, data-driven insights directly to your Telegram so you can make better-informed investment decisions without spending hours researching. It is built on a single principle: **capital preservation first**.
 
