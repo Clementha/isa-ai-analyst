@@ -1,6 +1,6 @@
 # 📈 ISA AI Analyst
 
-> Free AI analyst for UK ISA accounts. Runs in an isolated Docker container — sandboxed from your files, programs, and OS. Twice-daily portfolio screening with plain-English Telegram reports.
+> Free AI analyst for UK ISA accounts. Runs in an isolated Docker container on your own machine. Twice-daily portfolio screening with plain-English Telegram reports.
 
 Built by Clement — ex-big tech engineer, AI enthusiast, and firm believer that powerful tools should be free for everyone — as part of the [AI with Clement](https://www.youtube.com/@AIwithClement) YouTube channel.
 
