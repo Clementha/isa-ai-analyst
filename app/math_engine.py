@@ -155,17 +155,16 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         news_label = "Today's News"
 
     if recent_news is None:
-        report_content += f"{news_label}:\n - ⚠️ News fetch failed (API error or quota exceeded).\n"
+        news_text = " - ⚠️ News fetch failed (API error or quota exceeded)."
     elif len(recent_news) == 0:
-        report_content += f"{news_label}:\n - No recent news found.\n"
+        news_text = " - No recent news found."
     else:
         news_lines = []
         for i, item in enumerate(recent_news):
             prefix = "⚠️ " if i in gates['news_guilty'] else ""
             news_lines.append(f" - {prefix}[{item['date']}] {html.escape(item['title'])}")
         news_text = "\n".join(news_lines)
-        report_content += f"{news_label}:\n<blockquote expandable>{news_text}</blockquote>\n"
-    report_content += "\n"
+    report_content += f"{news_label}:\n<blockquote expandable>{news_text}</blockquote>\n\n"
 
 disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
 report_content += disclaimer_text

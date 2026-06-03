@@ -92,7 +92,7 @@ Before issuing any BUY recommendation, the analyst requires a stock to pass **th
 |---|---|---|
 | **Trend** | Current price must be above the Simple Moving Average (SMA) | Avoids buying into a confirmed downtrend |
 | **Volatility** | Daily volatility must be strictly under 5% | Avoids entering during high-turbulence periods where price swings are driven by noise rather than fundamentals |
-| **News** | AI scans recent headlines and summaries (with publication dates) and blocks entry if severe fundamental risks are detected (fraud, lawsuits, profit warnings, regulatory action) | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
+| **News** | AI scans up to 10 headlines from the past 30 days and blocks entry if severe fundamental risks are detected (fraud, lawsuits, credit downgrades, regulatory sanctions). The report shows exactly which article triggered a flag so you can verify the verdict yourself | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
 
 All three gates must be green simultaneously. One red gate = no recommendation.
 
@@ -149,7 +149,7 @@ You can also chat with the analyst at any time in plain English to update your p
 | 🌅 **Two-Format Reports** | Morning briefing for pre-market context; evening analysis with confirmed closing prices and DCA recommendations |
 | 🛡️ **3-Gate Safety Filter** | Every BUY signal must pass trend, volatility, and AI news checks before being recommended |
 | 📉 **DCA Engine** | Scales into positions gradually up to a daily limit — no lump-sum exposure |
-| 📰 **AI News Risk Manager** | Scans up to 5 headlines and summaries per stock (with dates) and blocks recommendations if severe fundamental risks are detected |
+| 📰 **AI News Risk Manager** | Scans up to 10 headlines per stock from the past 30 days — flags the specific article(s) that triggered a risk verdict so you can verify it yourself |
 | 🔒 **Fail-Secure Architecture** | If the market is closed or an API goes down, the analyst safely skips execution |
 | 📱 **Telegram Integration** | Reports pushed straight to your phone, with instant price and news lookup on demand |
 | 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, change your schedule, or request a price check |
