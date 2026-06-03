@@ -16,6 +16,7 @@ This guide is for developers and technically confident users who want to go beyo
 - [Minimum Requirements](#minimum-requirements)
 - [Reliability & Auto-Restart](#-reliability--auto-restart)
 - [Updating & Maintenance](#-updating--maintenance)
+- [Practice Mode](#-practice-mode-experimental)
 
 ---
 
@@ -319,3 +320,53 @@ docker compose up -d --build
 ```
 
 A plain `docker compose start` after a `stop` reuses the existing image — it will not pick up any changes to Python source files or dependencies.
+
+---
+
+## 🧪 Practice Mode (Experimental)
+
+> ⚠️ **This is not the intended use case for this bot.** ISA AI Analyst was designed to analyse a conservative, tax-efficient Stocks ISA. Practice mode connects to a virtual **Invest** account with fake money — there is no practice ISA on Trading 212. Recommendations generated in practice mode carry no ISA tax-efficiency context and should not be applied directly to your real ISA.
+>
+> This feature is here for developers and experimenters who want to test the pipeline end-to-end, play with high-risk stocks, or build new features without touching real money.
+
+### What practice mode does
+
+- Connects to `demo.trading212.com` instead of `live.trading212.com`
+- Uses a separate T212 API key scoped to the practice Invest account
+- Labels every report with **🧪 PRACTICE** so you never confuse it with a live run
+- Everything else — EODHD data, LLM news analysis, Telegram delivery, the 3-gate filter — works exactly as normal
+
+### Setup
+
+**1.** In the Trading 212 app, open the menu → **Switch to Practice** → choose **Invest**.
+
+**2.** Set your virtual balance to **£20,000** so the targets align with the default `isa_allowance_target` in `portfolio_targets.json`: **Settings → Reset account** → drag the slider to £20,000 → tap **Reset account**.
+
+**3.** Inside the practice Invest account, go to **Settings → API (Beta)** and generate a new Key ID and Secret. This key is separate from your live key.
+
+**4.** Add one line to your `.env` file:
+
+```env
+T212_MODE=practice
+```
+
+**5.** Replace `T212_KEY_ID` and `T212_SECRET` in `.env` with your practice credentials.
+
+**6.** Recreate the container to pick up the change:
+
+```bash
+docker compose up -d
+```
+
+Every report will now show `🧪 PRACTICE` in the header.
+
+### Switching back to live
+
+Remove `T212_MODE=practice` from `.env` (or set it to `live`), restore your original T212 credentials, and rebuild. If you mix up the keys — a practice key against the live endpoint or vice versa — you will get an immediate auth error in the logs with a hint to check `T212_MODE`.
+
+### Notes for experimenters
+
+- The practice Invest account starts with virtual money but **zero positions**. Buy some stocks inside the T212 practice app first, then run the bot.
+- T212 practice mode only offers **Invest** and **CFD** — there is no practice Stocks ISA, Cash ISA, or SIPP.
+- Ticker symbols in a practice Invest account are the same as in a live Invest account, but may differ from ISA-scoped tickers. Use the bot's "Add [stock]" command to resolve them correctly for the practice account.
+- The `portfolio_targets.json` is shared between live and practice runs — consider keeping a separate config file if you want to maintain different target weightings.

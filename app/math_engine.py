@@ -8,7 +8,7 @@ import json
 import html
 import datetime
 import sys
-from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, EODHD_API_KEY
+from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, EODHD_API_KEY, T212_BASE, T212_MODE
 
 # Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
 # Anything before 14:00 = morning briefing; 14:00+ = evening analysis.
@@ -55,12 +55,18 @@ def fetch_realtime_price(symbol):
 def fetch_t212_portfolio():
     headers = {"Authorization": T212_AUTH_HEADER}
     try:
-        cash_resp = requests.get("https://live.trading212.com/api/v0/equity/account/cash", headers=headers).json()
-        pos_resp = requests.get("https://live.trading212.com/api/v0/equity/portfolio", headers=headers).json()
-
-        if 'code' in cash_resp and cash_resp['code'] == 'AuthenticationFailed':
-            print("Trading 212 Auth Failed. Check your Key ID and Secret.")
+        cash_r = requests.get(f"{T212_BASE}/equity/account/cash", headers=headers)
+        if cash_r.status_code == 401:
+            hint = " Practice key used with T212_MODE=live, or live key used with T212_MODE=practice?" if T212_MODE == 'practice' else " Check your T212_KEY_ID and T212_SECRET."
+            print(f"Trading 212 Auth Failed (401).{hint}")
             return 0, {}
+        cash_resp = cash_r.json()
+        if 'code' in cash_resp and cash_resp['code'] == 'AuthenticationFailed':
+            hint = " Practice key used with T212_MODE=live, or live key used with T212_MODE=practice?" if T212_MODE == 'practice' else " Check your T212_KEY_ID and T212_SECRET."
+            print(f"Trading 212 Auth Failed.{hint}")
+            return 0, {}
+
+        pos_resp = requests.get(f"{T212_BASE}/equity/portfolio", headers=headers).json()
 
         total_cash = cash_resp.get('total', 0)
         portfolio = {pos['ticker']: pos['currentValue'] for pos in pos_resp}
@@ -75,14 +81,16 @@ def fetch_t212_portfolio():
 total_value, current_positions = fetch_t212_portfolio()
 today_str = datetime.datetime.now().strftime("%d %b %Y")
 
+mode_badge = "🧪 PRACTICE" if T212_MODE == "practice" else "🏦 LIVE"
+
 if SESSION == "morning":
     report_content = f"=== 🌅 MORNING BRIEFING ===\n"
-    report_content += f"{today_str} | Prices as of previous close\n\n"
+    report_content += f"{today_str} | {mode_badge} | Prices as of previous close\n\n"
     report_content += f"Portfolio Value: £{total_value:.2f}\n"
     report_content += "-" * 30 + "\n\n"
 else:
     report_content = f"=== 📊 EVENING ANALYSIS ===\n"
-    report_content += f"{today_str} | Today's closing prices\n\n"
+    report_content += f"{today_str} | {mode_badge} | Today's closing prices\n\n"
     report_content += f"Total Value: £{total_value:.2f}\n"
     report_content += f"Target Cash: {TARGET_CASH_PCT * 100:.1f}%\n\n"
     report_content += "-" * 30 + "\n\n"

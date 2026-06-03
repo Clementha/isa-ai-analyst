@@ -7,7 +7,7 @@
 import sys
 import base64
 import requests
-from lib import get_secret, search_eodhd
+from lib import get_secret, search_eodhd, T212_BASE
 
 T212_KEY_ID = get_secret("T212_KEY_ID")
 T212_SECRET = get_secret("T212_SECRET")
@@ -17,7 +17,7 @@ def fetch_t212_instruments():
     auth = base64.b64encode(credentials.encode()).decode()
     try:
         resp = requests.get(
-            "https://live.trading212.com/api/v0/equity/metadata/instruments",
+            f"{T212_BASE}/equity/metadata/instruments",
             headers={"Authorization": f"Basic {auth}"},
             timeout=30
         )

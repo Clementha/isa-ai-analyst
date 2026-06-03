@@ -26,6 +26,9 @@ LLM_API_KEY = get_secret("LLM_API_KEY")
 LLM_BASE_URL = get_secret("LLM_BASE_URL")
 LLM_MODEL = get_secret("LLM_MODEL")
 
+T212_MODE = (get_secret("T212_MODE") or "live").lower()
+T212_BASE = f"https://{'demo' if T212_MODE == 'practice' else 'live'}.trading212.com/api/v0"
+
 def search_eodhd(query):
     url = f"https://eodhd.com/api/search/{query}?api_token={EODHD_API_KEY}&fmt=json"
     try:
@@ -98,7 +101,8 @@ def analyse_news(name, news_items):
     actual_model = (LLM_MODEL or "").replace("openrouter/", "")
     payload = {
         "model": actual_model,
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0
     }
 
     try:
