@@ -47,7 +47,8 @@ def fetch_eod_data(symbol):
         return []
 
 def fetch_news(symbol):
-    url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=5&fmt=json"
+    from_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+    url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=10&from={from_date}&fmt=json"
     try:
         resp = requests.get(url, timeout=10)
         if resp.status_code != 200:
@@ -76,26 +77,29 @@ def fetch_news(symbol):
 
 def analyse_news(name, news_items):
     if news_items is None:
-        return "ERROR"
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
     if len(news_items) == 0:
-        return "NO_NEWS"
+        return {"verdict": "NO_NEWS", "reason": None, "guilty_indices": []}
     if not LLM_API_KEY or not LLM_BASE_URL:
         print(f"⚠️ CONFIG ERROR: Missing LLM_API_KEY or LLM_BASE_URL for {name}.")
-        return "ERROR"
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
 
-    formatted_news = "\n".join(
-        f"[{item['date']}] {item['title']}" + (f"\n  {item['summary']}" if item['summary'] else "")
-        for item in news_items
+    numbered_news = "\n".join(
+        f"[{i+1}] [{item['date']}] {item['title']}" + (f"\n  {item['summary'][:200]}" if item['summary'] else "")
+        for i, item in enumerate(news_items)
     )
 
     prompt = (
         f"You are a strict quantitative risk manager for a capital-preservation-first ISA portfolio. "
         f"Review these recent news items for {name} (a UK-listed equity). "
-        f"Reply with the exact word 'FAIL' only if the news indicates severe fundamental risks such as "
+        f"Reply 'FAIL' only if the news indicates severe fundamental risks such as "
         f"fraud, criminal investigations, bankruptcy, insolvency, major credit downgrades, or regulatory sanctions. "
         f"Sector-wide macroeconomic concerns, routine earnings misses, or analyst target price changes do NOT warrant FAIL. "
-        f"Reply with the exact word 'PASS' for all other cases.\n\nNews items:\n"
-        + formatted_news
+        f"Reply 'PASS' for all other cases.\n\n"
+        f"If FAIL, also provide on separate lines:\n"
+        f"REASON: one sentence explaining the specific risk\n"
+        f"ARTICLES: comma-separated numbers of the articles that triggered FAIL (e.g. 2,5)\n\n"
+        f"News items:\n{numbered_news}"
     )
 
     actual_model = (LLM_MODEL or "").replace("openrouter/", "")
@@ -109,23 +113,38 @@ def analyse_news(name, news_items):
         headers = {"Authorization": f"Bearer {LLM_API_KEY}", "Content-Type": "application/json"}
         resp = requests.post(LLM_BASE_URL, headers=headers, json=payload, timeout=15)
         resp.raise_for_status()
-        content = resp.json()['choices'][0]['message']['content'].strip().upper()
-        return "FAIL" if "FAIL" in content else "PASS"
+        content = resp.json()['choices'][0]['message']['content'].strip()
+        lines = content.split('\n')
+        verdict = "FAIL" if "FAIL" in lines[0].upper() else "PASS"
+        reason = None
+        guilty_indices = []
+        if verdict == "FAIL":
+            for line in lines[1:]:
+                line = line.strip()
+                if line.upper().startswith("REASON:"):
+                    reason = line[7:].strip()
+                elif line.upper().startswith("ARTICLES:"):
+                    try:
+                        nums = line[9:].strip().split(',')
+                        guilty_indices = [int(n.strip()) - 1 for n in nums if n.strip().isdigit()]
+                    except Exception:
+                        pass
+        return {"verdict": verdict, "reason": reason, "guilty_indices": guilty_indices}
     except Exception as e:
         print(f"❌ LLM API Error for {name}: {e}")
-        return "ERROR"
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
 
 def evaluate_gates(closes, news_items, name):
-    """Evaluate all 3 safety gates. Returns dict with pass/fail booleans and display icons."""
     sma_pass = closes[-1] > statistics.mean(closes)
     vol_pass = abs((closes[-1] - closes[-2]) / closes[-2]) * 100 < 5.0
-    sentiment = analyse_news(name, news_items)
+    news_result = analyse_news(name, news_items)
+    verdict = news_result["verdict"]
 
-    if sentiment == "NO_NEWS":
+    if verdict == "NO_NEWS":
         news_pass, news_icon = True, "🤷‍♂️"
-    elif sentiment == "FAIL":
+    elif verdict == "FAIL":
         news_pass, news_icon = False, "👎"
-    elif sentiment == "ERROR":
+    elif verdict == "ERROR":
         news_pass, news_icon = False, "⚠️"
     else:
         news_pass, news_icon = True, "👍"
@@ -138,4 +157,6 @@ def evaluate_gates(closes, news_items, name):
         "vol_icon": "👍" if vol_pass else "👎",
         "news_icon": news_icon,
         "all_green": sma_pass and vol_pass and news_pass,
+        "news_reason": news_result["reason"],
+        "news_guilty": news_result["guilty_indices"],
     }

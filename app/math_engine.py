@@ -130,8 +130,10 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f} ({price_date})\n"
         report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
+        if gates['news_reason']:
+            report_content += f"News: {html.escape(gates['news_reason'])}\n"
         report_content += f"Outlook: {'🟢 GREEN' if gates['all_green'] else '🔴 RISK FLAGGED'}\n"
-        report_content += "Overnight News:\n"
+        news_label = "Overnight News"
     else:
         if gates['all_green']:
             signal_color = "🟢 GREEN"
@@ -148,15 +150,21 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
         report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
         report_content += f"Signal: {signal_color} [{action}]\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
-        report_content += "Today's News:\n"
+        if gates['news_reason']:
+            report_content += f"News: {html.escape(gates['news_reason'])}\n"
+        news_label = "Today's News"
 
     if recent_news is None:
-        report_content += " - ⚠️ News fetch failed (API error or quota exceeded).\n"
+        report_content += f"{news_label}:\n - ⚠️ News fetch failed (API error or quota exceeded).\n"
     elif len(recent_news) == 0:
-        report_content += " - No recent news found.\n"
+        report_content += f"{news_label}:\n - No recent news found.\n"
     else:
-        for item in recent_news:
-            report_content += f" - [{item['date']}] {html.escape(item['title'])}\n"
+        news_lines = []
+        for i, item in enumerate(recent_news):
+            prefix = "⚠️ " if i in gates['news_guilty'] else ""
+            news_lines.append(f" - {prefix}[{item['date']}] {html.escape(item['title'])}")
+        news_text = "\n".join(news_lines)
+        report_content += f"{news_label}:\n<blockquote expandable>{news_text}</blockquote>\n"
     report_content += "\n"
 
 disclaimer_text = "\n<i>* Disclaimer: This AI-generated report may contain errors. Verify data independently before trading.</i>"
