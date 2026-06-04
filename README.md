@@ -33,7 +33,7 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 ```
 === 🌅 MORNING BRIEFING ===
-06 May 2026 | Prices as of previous close
+06 May 2026 | 🏦 LIVE | Prices as of previous close
 
 Portfolio Value: £12,450.00
 ------------------------------
@@ -42,16 +42,18 @@ Portfolio Value: £12,450.00
 Holding: 21.3% (£4,260.00) → Target: 25%
 Gates: SMA 👍 | Vol 👍 | News 👍
 Outlook: 🟢 GREEN
-Overnight News:
- - [05 May] Vodafone completes network expansion deal with BT
- - [04 May] Analysts raise price target following dividend confirmation
+Overnight News (tap to expand ▾):
+▎ - [05 May] Vodafone completes network expansion deal with BT
+▎ - [04 May] Analysts raise price target following dividend confirmation
 ```
+
+> The header shows the data source — **🏦 LIVE** (your real ISA) or **🧪 PRACTICE** (a virtual account). News headlines sit in a collapsible block you tap to expand in Telegram.
 
 **Evening Analysis (17:30)** — actionable recommendations using today's confirmed closing prices:
 
 ```
 === 📊 EVENING ANALYSIS ===
-06 May 2026 | Today's closing prices
+06 May 2026 | 🏦 LIVE | Today's closing prices
 
 Total Value: £12,480.00
 Target Cash: 25.0%
@@ -61,22 +63,35 @@ Target Cash: 25.0%
 Target: 25% (£5,000.00) | Current: 21.1% (£4,280.00)
 Signal: 🟢 GREEN [BUY £500.00 (DCA mode, £720.00 total gap)]
 Gates: SMA 👍 | Vol 👍 | News 👍
-Today's News:
- - [06 May] Vodafone completes network expansion deal with BT
- - [04 May] Analysts raise price target following dividend confirmation
- - [03 May] Telecoms sector outperforms FTSE 100 for third consecutive week
+Today's News (tap to expand ▾):
+▎ - [06 May] Vodafone completes network expansion deal with BT
+▎ - [04 May] Analysts raise price target following dividend confirmation
+▎ - [03 May] Telecoms sector outperforms FTSE 100 for third consecutive week
+
+🔹 Diageo PLC (DGE_LSE_EQ / DGE.LSE) | Close: £21.40 (Tue 06 May)
+Target: 20% (£4,000.00) | Current: 11.6% (£2,320.00)
+Signal: 🔴 RED [AVOID]
+Gates: SMA 👍 | Vol 👍 | News 👎
+News: FCA has opened a formal investigation into revenue recognition
+Today's News (tap to expand ▾):
+▎ - ⚠️ [06 May] Diageo faces FCA probe over revenue recognition
+▎ - [02 May] Spirits demand softens in key US market
 ```
+
+> When the News gate fails, a **`News:`** line summarises *why*, and a **⚠️** marks the exact article(s) that triggered it — so you can read the source and verify the verdict yourself.
 
 ### Reading the Report
 
 | Symbol | Meaning |
 |---|---|
+| 🏦 LIVE / 🧪 PRACTICE | Which Trading 212 account the report is based on — your real ISA, or a virtual practice account |
 | 🟢 GREEN | All 3 safety gates passed — a BUY or HOLD action is suggested |
 | 🔴 RED | One or more gates failed — action is SELL or AVOID |
 | 👍 | That individual gate passed |
 | 👎 | That individual gate failed — this is what triggered a RED signal |
 | 🤷 | No recent news found — news gate skipped, not counted as a fail |
-| ⚠️ | News gate could not be evaluated (AI API error) — treated as a fail |
+| ⚠️ (in the Gates line) | News gate could not be evaluated (AI API error) — treated as a fail |
+| ⚠️ (next to a headline) | Marks the specific article that triggered a News 👎 — read it to verify the verdict |
 
 ---
 
