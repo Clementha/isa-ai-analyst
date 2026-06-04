@@ -20,7 +20,7 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 
 📺 **Intro to ISA AI Analyst + complete setup tutorial:**
 
-[![Build a Free AI Stock Analyst for Your ISA - Complete Setup Guide](https://img.youtube.com/vi/y36PGM1wl34/hqdefault.jpg)](https://youtu.be/y36PGM1wl34)
+[![Build a Free AI Stock Analyst for Your ISA - Complete Setup Guide](https://img.youtube.com/vi/y36PGM1wl34/maxresdefault.jpg)](https://youtu.be/y36PGM1wl34)
 [![Watch on YouTube](https://img.shields.io/badge/Watch%20on-YouTube-red?logo=youtube&logoColor=white)](https://youtu.be/y36PGM1wl34)
 
 ---
