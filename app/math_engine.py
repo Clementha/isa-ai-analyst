@@ -68,11 +68,19 @@ def fetch_t212_portfolio():
 
         pos_resp = requests.get(f"{T212_BASE}/equity/portfolio", headers=headers).json()
 
-        total_cash = cash_resp.get('total', 0)
-        portfolio = {pos['ticker']: pos['currentValue'] for pos in pos_resp}
-        total_invested = sum(portfolio.values())
+        # The cash endpoint's 'total' is the whole account value (free cash +
+        # current market value of all holdings) — already in account currency (£).
+        total_value = cash_resp.get('total', 0)
 
-        return total_cash + total_invested, portfolio
+        # The portfolio endpoint has no ready value field — it returns quantity and
+        # currentPrice (in GBX/pence for LSE lines), so compute each value in £.
+        portfolio = {}
+        for pos in pos_resp:
+            qty = pos.get('quantity', 0)
+            price = pos.get('currentPrice', 0)  # GBX (pence) for UK lines
+            portfolio[pos['ticker']] = qty * price / 100
+
+        return total_value, portfolio
     except Exception as e:
         print(f"Error connecting to Trading 212: {e}")
         return 0, {}
