@@ -35,7 +35,7 @@ Powered by the [OpenClaw](https://openclaw.ai) framework, it runs entirely on yo
 === 🌅 MORNING BRIEFING ===
 06 May 2026 | 🏦 LIVE | Prices as of previous close
 
-Portfolio Value: £12,450.00
+Portfolio Value: £12,450.00 | Free Cash: £3,200.00
 ------------------------------
 
 🔹 Vodafone Group PLC (VOD_LSE_EQ / VOD.LSE) | Close: £74.32 (Mon 05 May)
@@ -55,7 +55,7 @@ Overnight News (tap to expand ▾):
 === 📊 EVENING ANALYSIS ===
 06 May 2026 | 🏦 LIVE | Today's closing prices
 
-Total Value: £12,480.00
+Total Value: £12,480.00 | Free Cash: £3,180.00
 Target Cash: 25.0%
 ------------------------------
 
@@ -147,9 +147,9 @@ The analyst runs twice a day at default times of **08:30 and 17:30 UK time**:
 At each report, it:
 
 1. **Reads your portfolio targets** — the stocks you want to hold and at what allocations
-2. **Fetches market data** from EODHD for every stock in your watchlist
-3. **Applies the 3 Safety Gates** — trend, volatility, and news checks for each holding
-4. **Compares your current holdings** via the Trading 212 read-only API against your targets
+2. **Checks what you actually hold** via the Trading 212 read-only API — your live holdings are the source of truth
+3. **Screens every holding** — fetches EODHD data and applies the 3 Safety Gates to each stock you *own* and each *target*, so nothing you hold goes unchecked
+4. **Compares actual vs target** — flags any held stock that isn't in your targets as ⚠️ untracked, and sizes BUY suggestions against your real free cash
 5. **Generates a report** and pushes it directly to your Telegram
 
 You can also chat with the analyst at any time in plain English to update your portfolio, change your schedule, trigger an immediate report, or ask for the latest price and news on any stock you hold.
@@ -169,6 +169,7 @@ You can also chat with the analyst at any time in plain English to update your p
 | 📱 **Telegram Integration** | Reports pushed straight to your phone, with instant price and news lookup on demand |
 | 💬 **Natural Language Control** | Chat to update your portfolio, adjust allocations, change your schedule, or request a price check |
 | 🔎 **Auto Ticker Resolution** | Tell the bot a stock name — it resolves the correct T212 and EODHD ticker symbols automatically via EODHD search with T212 metadata fallback (works on the EODHD free tier) |
+| 📥 **Portfolio Import & Reconciliation** | Pull your live Trading 212 holdings into your targets with one command — and every stock you actually hold is screened each report, even if it's not in your targets |
 
 ---
 
@@ -360,6 +361,7 @@ Open Telegram and message your bot. ISA AI Analyst isn't just a timer that fires
 | `Run it now.` | Triggers an immediate portfolio analysis and report |
 | `What's the price of Vodafone?` | Fetches the latest price and news for that stock |
 | `Show my portfolio` | Displays current allocations and unallocated percentage |
+| `Import my portfolio` | Pulls your existing Trading 212 holdings into your targets in one step — ideal for first-time setup |
 | `What is my current schedule?` | Shows the configured report times |
 | `Add Scottish Mortgage at 25%` | Resolves tickers automatically and adds to your portfolio |
 | `Remove Vodafone` | Removes a stock from your portfolio targets |
@@ -370,6 +372,8 @@ Open Telegram and message your bot. ISA AI Analyst isn't just a timer that fires
 | `Pause reporting.` | Suspends automatic daily reports |
 
 > ℹ️ **Cash reserve default:** When the bot first writes your portfolio file it uses **25% as the default cash reserve**. You can adjust this at any time — for example, send `Set cash reserve to 10%` to deploy more of your ISA into stocks, or `Set cash reserve to 50%` to keep half in cash while you build your positions gradually.
+
+> 📥 **New here?** Rather than adding stocks one by one, send `Import my portfolio` to pull in everything you already hold in Trading 212 at once. Each holding starts at a 25% target (capped to leave room to add more), and nothing is saved until you confirm with `YES`.
 
 #### 💬 Ask It Anything — It Thinks Like an Analyst
 
