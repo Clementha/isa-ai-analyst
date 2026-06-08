@@ -3,7 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
+import re
 import html
+import base64
 import datetime
 import statistics
 import requests
@@ -74,6 +76,55 @@ def fetch_news(symbol):
     except Exception as e:
         print(f"⚠️ EODHD news exception for {symbol}: {e}")
         return None
+
+def eodhd_ticker_from_t212(t212_ticker):
+    """Derive an EODHD LSE ticker from a T212 ticker. Handles both CODE_LSE_EQ
+    (equities, e.g. GSK_LSE_EQ -> GSK.LSE) and CODEl_EQ / CODEm_EQ (ETF currency
+    lines, e.g. RBTXl_EQ -> RBTX.LSE)."""
+    base = t212_ticker.split('_')[0]
+    m = re.match(r'^([A-Z0-9]+)[a-z]?$', base)
+    code = m.group(1) if m else base
+    return f"{code}.LSE"
+
+def fetch_eodhd_usage():
+    """EODHD plan + daily limit from the /api/user endpoint, or None on failure.
+    Used to warn before a portfolio add would outgrow the daily call quota. The
+    'dailyRateLimit' it reports is the real recurring ceiling for the key (free
+    keys often start with a temporary larger buffer, which we deliberately ignore
+    — we care about the steady-state limit the user will eventually hit)."""
+    url = f"https://eodhd.com/api/user?api_token={EODHD_API_KEY}&fmt=json"
+    try:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        return {
+            "plan": data.get("subscriptionType", "unknown"),
+            "limit": data.get("dailyRateLimit", 0),
+            "used": data.get("apiRequests", 0),
+        }
+    except Exception:
+        return None
+
+def t212_auth_header():
+    """Basic-auth header for Trading 212 from the configured key/secret."""
+    creds = f"{get_secret('T212_KEY_ID')}:{get_secret('T212_SECRET')}"
+    token = base64.b64encode(creds.encode()).decode()
+    return {"Authorization": f"Basic {token}"}
+
+def fetch_t212_instruments():
+    """Full T212 instrument metadata (name, ISIN, currencyCode per ticker) in one
+    bulk call. Returns [] on error."""
+    try:
+        resp = requests.get(f"{T212_BASE}/equity/metadata/instruments",
+                            headers=t212_auth_header(), timeout=30)
+        if resp.status_code != 200:
+            print(f"T212 API error: HTTP {resp.status_code}")
+            return []
+        return resp.json()
+    except Exception as e:
+        print(f"T212 error: {e}")
+        return []
 
 def analyse_news(name, news_items):
     if news_items is None:

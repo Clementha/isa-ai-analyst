@@ -5,35 +5,12 @@
 #
 # Usage: python3 /app/resolve_ticker.py "GSK"
 import sys
-import re
-import base64
-import requests
-from lib import get_secret, search_eodhd, fetch_eod_data, T212_BASE
-
-T212_KEY_ID = get_secret("T212_KEY_ID")
-T212_SECRET = get_secret("T212_SECRET")
+from lib import search_eodhd, fetch_eod_data, eodhd_ticker_from_t212, fetch_t212_instruments
 
 # London-traded lines settle in pence (GBX) or occasionally GBP. A fund can list
 # multiple currency classes under ONE ISIN (e.g. RBTX=GBX, RBOT=USD), so ISIN
 # alone cannot pick the UK line — currency is the real discriminator.
 UK_CURRENCIES = ("GBX", "GBP")
-
-def fetch_t212_instruments():
-    credentials = f"{T212_KEY_ID}:{T212_SECRET}"
-    auth = base64.b64encode(credentials.encode()).decode()
-    try:
-        resp = requests.get(
-            f"{T212_BASE}/equity/metadata/instruments",
-            headers={"Authorization": f"Basic {auth}"},
-            timeout=30
-        )
-        if resp.status_code != 200:
-            print(f"T212 API error: HTTP {resp.status_code}")
-            return []
-        return resp.json()
-    except Exception as e:
-        print(f"T212 error: {e}")
-        return []
 
 def pick_eodhd_uk_line(results):
     """From EODHD search results, pick the LSE GBP/GBX line for the most relevant
@@ -66,15 +43,6 @@ def find_t212_uk_line(instruments, isin):
         return m.get('ticker'), (m.get('currencyCode') or '?').upper(), \
             f"no GBP/GBX T212 line; using {m.get('currencyCode')} line"
     return None, None, "no T212 instrument with matching ISIN"
-
-def eodhd_ticker_from_t212(t212_ticker):
-    """Derive an EODHD LSE ticker from a T212 ticker. Handles both CODE_LSE_EQ
-    (equities, e.g. GSK_LSE_EQ -> GSK.LSE) and CODEl_EQ / CODEm_EQ (ETF currency
-    lines, e.g. RBTXl_EQ -> RBTX.LSE)."""
-    base = t212_ticker.split('_')[0]
-    m = re.match(r'^([A-Z0-9]+)[a-z]?$', base)
-    code = m.group(1) if m else base
-    return f"{code}.LSE"
 
 def validate_eodhd(ticker):
     """Confirm the EODHD ticker actually returns price data (catches bad/guessed

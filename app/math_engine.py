@@ -8,7 +8,7 @@ import json
 import html
 import datetime
 import sys
-from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, EODHD_API_KEY, T212_BASE, T212_MODE
+from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, eodhd_ticker_from_t212, EODHD_API_KEY, T212_BASE, T212_MODE
 
 # Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
 # Anything before 14:00 = morning briefing; 14:00+ = evening analysis.
@@ -59,18 +59,20 @@ def fetch_t212_portfolio():
         if cash_r.status_code == 401:
             hint = " Practice key used with T212_MODE=live, or live key used with T212_MODE=practice?" if T212_MODE == 'practice' else " Check your T212_KEY_ID and T212_SECRET."
             print(f"Trading 212 Auth Failed (401).{hint}")
-            return 0, {}
+            return 0, 0, {}
         cash_resp = cash_r.json()
         if 'code' in cash_resp and cash_resp['code'] == 'AuthenticationFailed':
             hint = " Practice key used with T212_MODE=live, or live key used with T212_MODE=practice?" if T212_MODE == 'practice' else " Check your T212_KEY_ID and T212_SECRET."
             print(f"Trading 212 Auth Failed.{hint}")
-            return 0, {}
+            return 0, 0, {}
 
         pos_resp = requests.get(f"{T212_BASE}/equity/portfolio", headers=headers).json()
 
         # The cash endpoint's 'total' is the whole account value (free cash +
         # current market value of all holdings) — already in account currency (£).
+        # 'free' is the uninvested cash: the real budget we're allowed to deploy.
         total_value = cash_resp.get('total', 0)
+        free_cash = cash_resp.get('free', 0)
 
         # The portfolio endpoint has no ready value field — it returns quantity and
         # currentPrice (in GBX/pence for LSE lines), so compute each value in £.
@@ -80,43 +82,81 @@ def fetch_t212_portfolio():
             price = pos.get('currentPrice', 0)  # GBX (pence) for UK lines
             portfolio[pos['ticker']] = qty * price / 100
 
-        return total_value, portfolio
+        return total_value, free_cash, portfolio
     except Exception as e:
         print(f"Error connecting to Trading 212: {e}")
-        return 0, {}
+        return 0, 0, {}
 
 # --- THE MATH ENGINE ---
-total_value, current_positions = fetch_t212_portfolio()
+total_value, free_cash, current_positions = fetch_t212_portfolio()
 today_str = datetime.datetime.now().strftime("%d %b %Y")
 
 mode_badge = "🧪 PRACTICE" if T212_MODE == "practice" else "🏦 LIVE"
 
+# Free cash is the real DCA budget: buys draw from and are capped by it, so we
+# never recommend spending money that's already tied up in existing holdings.
+remaining_cash = free_cash
+
 if SESSION == "morning":
     report_content = f"=== 🌅 MORNING BRIEFING ===\n"
     report_content += f"{today_str} | {mode_badge} | Prices as of previous close\n\n"
-    report_content += f"Portfolio Value: £{total_value:.2f}\n"
+    report_content += f"Portfolio Value: £{total_value:.2f} | Free Cash: £{free_cash:.2f}\n"
     report_content += "-" * 30 + "\n\n"
 else:
     report_content = f"=== 📊 EVENING ANALYSIS ===\n"
     report_content += f"{today_str} | {mode_badge} | Today's closing prices\n\n"
-    report_content += f"Total Value: £{total_value:.2f}\n"
+    report_content += f"Total Value: £{total_value:.2f} | Free Cash: £{free_cash:.2f}\n"
     report_content += f"Target Cash: {TARGET_CASH_PCT * 100:.1f}%\n\n"
     report_content += "-" * 30 + "\n\n"
 
+# --- BUILD ANALYSIS UNIVERSE: targets ∪ actual T212 holdings ---
+# The JSON supplies intent (target weights + ticker mapping); T212 supplies
+# reality. Every ticker you actually HOLD enters the universe automatically, so
+# an unlisted position can never silently skip the 3-gate safety screen. We
+# analyse all of them — quota is gated at "add ticker" time by the agent, not here.
+universe = {}
 for t212_ticker, stock_data in TARGET_WEIGHTS.items():
-    target_pct = stock_data.get("target_weight", 0)
-    eodhd_ticker = stock_data.get("eodhd_ticker", "")
-    name = stock_data.get("name", t212_ticker)
+    universe[t212_ticker] = {
+        "name": stock_data.get("name", t212_ticker),
+        "eodhd_ticker": stock_data.get("eodhd_ticker", ""),
+        "target_weight": stock_data.get("target_weight", 0),
+        "current_value": current_positions.get(t212_ticker, 0),
+        "untracked": False,
+    }
+for t212_ticker, value in current_positions.items():
+    if t212_ticker in universe:
+        continue
+    # Held in T212 but absent from the targets file (e.g. bought directly in the
+    # app). Best-effort derive an EODHD ticker so it still gets screened.
+    universe[t212_ticker] = {
+        "name": t212_ticker,
+        "eodhd_ticker": eodhd_ticker_from_t212(t212_ticker),
+        "target_weight": 0,
+        "current_value": value,
+        "untracked": True,
+    }
 
-    current_value = current_positions.get(t212_ticker, 0)
+for t212_ticker, entry in universe.items():
+    target_pct = entry["target_weight"]
+    eodhd_ticker = entry["eodhd_ticker"]
+    name = entry["name"]
+    untracked = entry["untracked"]
+
+    current_value = entry["current_value"]
     current_pct = (current_value / total_value) * 100 if total_value > 0 else 0
     target_value = ISA_ALLOWANCE * target_pct
     delta_value = target_value - current_value
 
-    data = fetch_eod_data(eodhd_ticker)
+    data = fetch_eod_data(eodhd_ticker) if eodhd_ticker else []
     if not data or len(data) < 20:
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>\n"
-        report_content += "Signal: ⚠️ ERROR [Insufficient EODHD Data / Bad Ticker]\n\n"
+        if untracked:
+            # Surface it loudly (the whole point) even when we can't price it.
+            report_content += f"🔹 <b>{name} ({t212_ticker})</b> | Holding: {current_pct:.1f}% (£{current_value:.2f})\n"
+            report_content += "Signal: 🟡 UNTRACKED — held but not in your targets, and couldn't fetch market data.\n"
+            report_content += "Action: Add it via the bot ('Add ...') or exit the position. (Could also be EODHD quota.)\n\n"
+        else:
+            report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>\n"
+            report_content += "Signal: ⚠️ ERROR [Insufficient EODHD Data / Bad Ticker]\n\n"
         continue
 
     closes = [float(day['close']) for day in data]
@@ -134,28 +174,54 @@ for t212_ticker, stock_data in TARGET_WEIGHTS.items():
     # --- EVALUATE THE 3 GATES ---
     gates = evaluate_gates(closes, recent_news, name)
 
+    untracked_tag = " ⚠️ UNTRACKED" if untracked else ""
+
     if SESSION == "morning":
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f} ({price_date})\n"
-        report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        if untracked:
+            report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → not in targets\n"
+        else:
+            report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
         if gates['news_reason']:
             report_content += f"News: {html.escape(gates['news_reason'])}\n"
         report_content += f"Outlook: {'🟢 GREEN' if gates['all_green'] else '🔴 RISK FLAGGED'}\n"
         news_label = "Overnight News"
     else:
-        if gates['all_green']:
+        if untracked:
+            # Untracked holdings are never a buy target. Green => review/trim;
+            # red => exit on risk (this is exactly the blind spot #1 closes).
+            if gates['all_green']:
+                signal_color = "🟡 UNTRACKED"
+                action = "REVIEW — held but not in targets (add via the bot or trim)"
+            else:
+                signal_color = "🔴 RED"
+                action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
+        elif gates['all_green']:
             signal_color = "🟢 GREEN"
             if delta_value > 50:
-                buy_amount = min(delta_value, DAILY_DCA_LIMIT)
-                action = f"BUY £{buy_amount:.2f} (DCA mode, £{delta_value:.2f} total gap)" if buy_amount < delta_value else f"BUY £{buy_amount:.2f}"
+                gap = delta_value
+                buy_amount = min(gap, DAILY_DCA_LIMIT, remaining_cash)
+                if buy_amount < 50:
+                    action = f"HOLD (free cash £{remaining_cash:.2f} too low to act)"
+                else:
+                    remaining_cash -= buy_amount
+                    if buy_amount < gap:
+                        cap_note = "DCA cap" if buy_amount == DAILY_DCA_LIMIT else "cash-limited"
+                        action = f"BUY £{buy_amount:.2f} ({cap_note}, £{gap:.2f} total gap)"
+                    else:
+                        action = f"BUY £{buy_amount:.2f}"
             else:
                 action = "HOLD (Near target)"
         else:
             signal_color = "🔴 RED"
             action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
 
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b> | Close: £{latest:.2f} ({price_date})\n"
-        report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
+        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        if untracked:
+            report_content += f"Current: {current_pct:.1f}% (£{current_value:.2f}) | Not in targets\n"
+        else:
+            report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
         report_content += f"Signal: {signal_color} [{action}]\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
         if gates['news_reason']:

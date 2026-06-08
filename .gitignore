@@ -1,6 +1,8 @@
 # Ignore the real secret files
 .env
 app/portfolio_targets.json
+# Backup + staged-import artifacts (portfolio_targets.backup.json, .proposed.json)
+app/portfolio_targets.*.json
 app/portfolio.md
 
 # Ignore Python caches
