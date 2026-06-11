@@ -16,7 +16,7 @@ This guide is for developers and technically confident users who want to go beyo
 - [Minimum Requirements](#minimum-requirements)
 - [Reliability & Auto-Restart](#-reliability--auto-restart)
 - [Updating & Maintenance](#-updating--maintenance)
-- [Practice Mode](#-practice-mode-experimental)
+- [Practice Mode](#-practice-mode-try-it-risk-free)
 
 ---
 
@@ -323,9 +323,9 @@ A plain `docker compose start` after a `stop` reuses the existing image — it w
 
 ---
 
-## 🧪 Practice Mode (Experimental)
+## 🧪 Practice Mode (Try It Risk-Free)
 
-> ⚠️ **This is not the intended use case for this bot.** ISA AI Analyst was designed to analyse a conservative, tax-efficient Stocks ISA. Practice mode connects to a virtual **Invest** account with fake money — there is no practice ISA on Trading 212. Recommendations generated in practice mode carry no ISA tax-efficiency context and should not be applied directly to your real ISA.
+> 🧪 **The safest way to try the bot first.** Practice mode points ISA AI Analyst at a Trading 212 **Practice Invest** account with virtual funds, so you can watch exactly how it behaves before committing real money. One thing to know: Trading 212 has no practice *ISA*, so practice runs use an Invest account and carry no ISA tax-efficiency context — treat the output as a hands-on demo of the bot, not ISA-specific advice for your real ISA.
 >
 > This feature is here for developers and experimenters who want to test the pipeline end-to-end, play with high-risk stocks, or build new features without touching real money.
 

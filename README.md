@@ -177,6 +177,7 @@ You can also chat with the analyst at any time in plain English to update your p
 
 - **Isolated & Containerised:** Runs entirely inside a Docker container, completely separated from your host OS. It can only access files within the project folder you explicitly mounted.†
 - **No Direct Trade Execution:** The analyst never has access to your trading account password. It uses read-only API permissions and can only provide recommendations — it cannot place trades.
+- **Try It Risk-Free First (Practice Mode):** Not ready to point it at real money? Run the bot against a Trading 212 **Practice** account (virtual funds) by setting `T212_MODE=practice` — every report is clearly badged **🧪 PRACTICE**. See exactly how it behaves, then switch to your live ISA when you're confident. Practice uses a separate API key (quick to generate) — full steps in [Practice Mode setup](ADVANCED.md#-practice-mode-try-it-risk-free).
 - **Budget-Controlled Running Costs:** All costs are bounded and predictable. OpenRouter charges only what you use — disable auto top-up when registering and set a hard spending limit so there are no surprise bills. EODHD runs on the free tier or a fixed monthly plan. Neither service can charge you more than you authorise.
 - **Minimised Prompt Injection Risk (Reports):** During scheduled report generation, the analyst does not browse arbitrary web pages. It exclusively consumes structured financial data from EODHD, significantly reducing the risk of prompt injection attacks via maliciously crafted web content.
 - **Reset Without Losing Your Settings:** If anything seems wrong, do not hesitate to use the [Emergency Reset](#-emergency-reset-nuke--restart) procedure to wipe the container and start fresh.
@@ -459,7 +460,7 @@ That's **2 calls per stock per report**, or **4 calls per stock per day** across
 
 > 🆓 **Up to 5 stocks across your 2 daily reports** on the free plan.
 
-On-demand price queries (via Telegram) use **2 additional calls** each (1 for live price + 1 for news), so frequent manual lookups will reduce the headroom for stocks. If you want to track more stocks or use price queries heavily, upgrade to a paid EODHD plan. See [EODHD pricing](https://eodhd.com/pricing) for available options.
+On-demand price queries (via Telegram) use **2 additional calls** each (1 for live price + 1 for news), so frequent manual lookups will reduce the headroom for stocks. If you hold **5+ stocks**, run extra reports, or use price queries heavily, a one-off **£5 EODHD top-up adds ~100,000 API calls** — cheap, pay-as-you-go peace of mind so your reports never hit the daily cap. (Or see [EODHD pricing](https://eodhd.com/pricing) for monthly plans.)
 
 > ℹ️ **Adding stocks does not consume EODHD quota.** The `Add [stock]` command resolves tickers using the Trading 212 instruments list as its primary source. EODHD search is used if available, but the bot falls back to T212 metadata automatically — so ticker resolution works fully on the free tier.
 
@@ -570,5 +571,5 @@ This software is provided for **educational and informational purposes only**. I
 
 ---
 
-† No Docker container is a perfect security boundary. Containers share the host's network stack by default, meaning a severely compromised container could theoretically attempt to probe your host machine over the local Docker bridge network. ISA AI Analyst does not mount the Docker socket and does not run in privileged mode, which significantly limits the blast radius of any such attack. For the vast majority of users, the container isolation is more than sufficient — but it is not equivalent to a fully separate virtual machine.
+† No Docker container is a perfect security boundary. ISA AI Analyst runs on Docker's default isolated bridge network (not host networking), but a severely compromised container could still theoretically attempt to probe your host machine over that bridge. It does not mount the Docker socket and does not run in privileged mode, which significantly limits the blast radius of any such attack. For the vast majority of users, the container isolation is more than sufficient — but it is not equivalent to a fully separate virtual machine.
 
