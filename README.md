@@ -179,7 +179,7 @@ You can also chat with the analyst at any time in plain English to update your p
 - **No Direct Trade Execution:** The analyst never has access to your trading account password. It uses read-only API permissions and can only provide recommendations — it cannot place trades.
 - **Try It Risk-Free First (Practice Mode):** Not ready to point it at real money? Run the bot against a Trading 212 **Practice** account (virtual funds) by setting `T212_MODE=practice` — every report is clearly badged **🧪 PRACTICE**. See exactly how it behaves, then switch to your live ISA when you're confident. Practice uses a separate API key (quick to generate) — full steps in [Practice Mode setup](ADVANCED.md#-practice-mode-try-it-risk-free).
 - **Budget-Controlled Running Costs:** All costs are bounded and predictable. OpenRouter charges only what you use — disable auto top-up when registering and set a hard spending limit so there are no surprise bills. EODHD runs on the free tier or a fixed monthly plan. Neither service can charge you more than you authorise.
-- **Minimised Prompt Injection Risk (Reports):** During scheduled report generation, the analyst does not browse arbitrary web pages. It exclusively consumes structured financial data from EODHD, significantly reducing the risk of prompt injection attacks via maliciously crafted web content.
+- **Minimised Prompt-Injection Risk (Reports):** The analyst never browses the open web — it only reads EODHD market data and news. Because news is free text, it's judged by a **tool-less classifier** (no file, shell, or agent access) whose output is only a PASS/FAIL signal — so a malicious headline can skew one of three safety gates at most; the classifier that reads it cannot run code or take any action. See [SECURITY.md](SECURITY.md).
 - **Reset Without Losing Your Settings:** If anything seems wrong, do not hesitate to use the [Emergency Reset](#-emergency-reset-nuke--restart) procedure to wipe the container and start fresh.
 
 ---
@@ -254,6 +254,9 @@ This step is identical on both platforms. Work through each service in order and
 
 1. Sign up: **[Create Trading 212 Account](https://www.trading212.com/invite/4DtCF9r91Ms)**
 2. Select **STOCKS ISA** and complete identity verification
+
+   > 🧪 **Prefer to try it without real money first?** Point the bot at a Trading 212 **Practice** account (virtual funds) instead of your ISA — see [Practice Mode setup](ADVANCED.md#-practice-mode-try-it-risk-free). Note: practice uses a *separate* API key (live and practice are different accounts), and there's no practice ISA, so it runs against a practice **Invest** account.
+
 3. Deposit at least **£1** — the API option won't appear until the account is funded
 4. Go to **Settings → API (Beta) → Generate API Key**
 
