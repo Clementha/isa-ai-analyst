@@ -8,6 +8,7 @@ import json
 import html
 import datetime
 import sys
+import urllib.parse
 from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, eodhd_ticker_from_t212, EODHD_API_KEY, T212_BASE, T212_MODE
 
 # Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
@@ -42,7 +43,7 @@ except Exception as e:
     DAILY_DCA_LIMIT = 500
 
 def fetch_realtime_price(symbol):
-    url = f"https://eodhd.com/api/real-time/{symbol}?api_token={EODHD_API_KEY}&fmt=json"
+    url = f"https://eodhd.com/api/real-time/{urllib.parse.quote(symbol, safe='')}?api_token={EODHD_API_KEY}&fmt=json"
     try:
         resp = requests.get(url, timeout=5)
         data = resp.json()
@@ -141,6 +142,11 @@ for t212_ticker, entry in universe.items():
     eodhd_ticker = entry["eodhd_ticker"]
     name = entry["name"]
     untracked = entry["untracked"]
+    # Escaped copies for the Telegram HTML-mode report. Raw values are still used
+    # for logic and the LLM news prompt; names/tickers can contain & or <.
+    name_d = html.escape(name)
+    t212_d = html.escape(t212_ticker)
+    eodhd_d = html.escape(eodhd_ticker)
 
     current_value = entry["current_value"]
     current_pct = (current_value / total_value) * 100 if total_value > 0 else 0
@@ -151,11 +157,11 @@ for t212_ticker, entry in universe.items():
     if not data or len(data) < 20:
         if untracked:
             # Surface it loudly (the whole point) even when we can't price it.
-            report_content += f"🔹 <b>{name} ({t212_ticker})</b> | Holding: {current_pct:.1f}% (£{current_value:.2f})\n"
+            report_content += f"🔹 <b>{name_d} ({t212_d})</b> | Holding: {current_pct:.1f}% (£{current_value:.2f})\n"
             report_content += "Signal: 🟡 UNTRACKED — held but not in your targets, and couldn't fetch market data.\n"
             report_content += "Action: Add it via the bot ('Add ...') or exit the position. (Could also be EODHD quota.)\n\n"
         else:
-            report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>\n"
+            report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>\n"
             report_content += "Signal: ⚠️ ERROR [Insufficient EODHD Data / Bad Ticker]\n\n"
         continue
 
@@ -177,7 +183,7 @@ for t212_ticker, entry in universe.items():
     untracked_tag = " ⚠️ UNTRACKED" if untracked else ""
 
     if SESSION == "morning":
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
         if untracked:
             report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → not in targets\n"
         else:
@@ -217,7 +223,7 @@ for t212_ticker, entry in universe.items():
             signal_color = "🔴 RED"
             action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
 
-        report_content += f"🔹 <b>{name} ({t212_ticker} / {eodhd_ticker})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
         if untracked:
             report_content += f"Current: {current_pct:.1f}% (£{current_value:.2f}) | Not in targets\n"
         else:

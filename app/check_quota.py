@@ -36,19 +36,23 @@ def main():
         return
 
     plan = usage["plan"]
-    limit = usage["limit"]
+    daily = usage["limit"]
+    extra = usage.get("extra", 0)
+    effective = daily + extra  # daily allowance + purchased/bonus call pool
     needed = projected * CALLS_PER_TICKER_PER_DAY
+    extra_note = f" + {extra} extra" if extra else ""
 
-    if needed > limit:
-        max_tickers = limit // CALLS_PER_TICKER_PER_DAY
+    if needed > effective:
+        max_tickers = effective // CALLS_PER_TICKER_PER_DAY
         print(f"QUOTA_WARN: Adding this holding makes {projected} stocks, needing ~{needed} "
-              f"EODHD calls/day — over your '{plan}' plan limit of {limit}/day "
-              f"(comfortably covers ~{max_tickers} stocks).")
-        print("  Relay to the user: once over the limit, some report lines may show incomplete "
-              "data. Suggest upgrading to a paid EODHD plan if they want more holdings.")
+              f"EODHD calls/day — over your available EODHD quota ({daily}/day{extra_note}, "
+              f"covers ~{max_tickers} stocks).")
+        print("  Relay to the user: once over quota, some report lines may show incomplete "
+              "data. Suggest a paid EODHD plan or call package if they want more holdings.")
     else:
-        print(f"QUOTA_OK: {projected} stocks need ~{needed} EODHD calls/day, "
-              f"within the '{plan}' plan limit of {limit}/day.")
+        reserve = f" (+{extra} extra calls in reserve)" if extra else ""
+        print(f"QUOTA_OK: {projected} stocks need ~{needed} EODHD calls/day, within your "
+              f"'{plan}' quota of {daily}/day{reserve}.")
 
 if __name__ == "__main__":
     main()

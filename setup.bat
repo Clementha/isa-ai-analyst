@@ -227,6 +227,8 @@ if errorlevel 1 goto WAIT_LOOP
 
 echo [*] Configuring AI Model via Official CLI...
 docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "%DEFAULT_LLM_MODEL%" >nul 2>&1
+REM Keep Telegram answer-streaming but hide transient tool-execution/progress chatter
+docker exec isa_ai_analyst openclaw config set channels.telegram.streaming.preview.toolProgress false >nul 2>&1
 
 echo [*] Safely injecting API Keys...
 if not exist openclaw_data\agents\main\agent mkdir openclaw_data\agents\main\agent

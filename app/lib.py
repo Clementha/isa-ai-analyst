@@ -9,6 +9,7 @@ import base64
 import datetime
 import statistics
 import requests
+import urllib.parse
 
 def get_secret(key):
     val = os.getenv(key)
@@ -31,18 +32,27 @@ LLM_MODEL = get_secret("LLM_MODEL")
 T212_MODE = (get_secret("T212_MODE") or "live").lower()
 T212_BASE = f"https://{'demo' if T212_MODE == 'practice' else 'live'}.trading212.com/api/v0"
 
+# Stock-name / ticker inputs that reach the resolver scripts: allow only the
+# characters real names and tickers actually use (letters, digits, space, and
+# . & - ( ) / '). Defence-in-depth against malformed API calls and against
+# untrusted input being interpolated into a command line.
+ALLOWED_QUERY = re.compile(r"^[A-Za-z0-9 .&()/'\-]{1,64}$")
+
+def is_valid_query(q):
+    return bool(q) and bool(ALLOWED_QUERY.match(q))
+
 def search_eodhd(query):
-    url = f"https://eodhd.com/api/search/{query}?api_token={EODHD_API_KEY}&fmt=json"
+    url = f"https://eodhd.com/api/search/{urllib.parse.quote(query, safe='')}"
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, params={"api_token": EODHD_API_KEY, "fmt": "json"}, timeout=10)
         return resp.json() if resp.status_code == 200 else []
     except Exception:
         return []
 
 def fetch_eod_data(symbol):
-    url = f"https://eodhd.com/api/eod/{symbol}?api_token={EODHD_API_KEY}&fmt=json&period=d"
+    url = f"https://eodhd.com/api/eod/{urllib.parse.quote(symbol, safe='')}"
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, params={"api_token": EODHD_API_KEY, "fmt": "json", "period": "d"}, timeout=10)
         data = resp.json()
         return data[-20:] if isinstance(data, list) and len(data) > 0 else []
     except Exception:
@@ -50,9 +60,10 @@ def fetch_eod_data(symbol):
 
 def fetch_news(symbol):
     from_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
-    url = f"https://eodhd.com/api/news?api_token={EODHD_API_KEY}&s={symbol}&limit=10&from={from_date}&fmt=json"
+    url = "https://eodhd.com/api/news"
+    params = {"api_token": EODHD_API_KEY, "s": symbol, "limit": 10, "from": from_date, "fmt": "json"}
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, params=params, timeout=10)
         if resp.status_code != 200:
             print(f"⚠️ EODHD news error for {symbol}: HTTP {resp.status_code} — {resp.text[:100]}")
             return None  # API error — distinct from genuine no-news
@@ -87,11 +98,11 @@ def eodhd_ticker_from_t212(t212_ticker):
     return f"{code}.LSE"
 
 def fetch_eodhd_usage():
-    """EODHD plan + daily limit from the /api/user endpoint, or None on failure.
-    Used to warn before a portfolio add would outgrow the daily call quota. The
-    'dailyRateLimit' it reports is the real recurring ceiling for the key (free
-    keys often start with a temporary larger buffer, which we deliberately ignore
-    — we care about the steady-state limit the user will eventually hit)."""
+    """EODHD plan + quota from the /api/user endpoint, or None on failure. Used to
+    warn before a portfolio add would outgrow available EODHD calls. Returns both
+    'dailyRateLimit' and 'extraLimit': extraLimit is a pool of purchased/bonus
+    calls on top of the daily allowance (e.g. a paid call package), so the real
+    headroom is limit + extra — callers must count both, not just the daily."""
     url = f"https://eodhd.com/api/user?api_token={EODHD_API_KEY}&fmt=json"
     try:
         resp = requests.get(url, timeout=10)
@@ -101,6 +112,7 @@ def fetch_eodhd_usage():
         return {
             "plan": data.get("subscriptionType", "unknown"),
             "limit": data.get("dailyRateLimit", 0),
+            "extra": data.get("extraLimit", 0),
             "used": data.get("apiRequests", 0),
         }
     except Exception:
@@ -114,17 +126,22 @@ def t212_auth_header():
 
 def fetch_t212_instruments():
     """Full T212 instrument metadata (name, ISIN, currencyCode per ticker) in one
-    bulk call. Returns [] on error."""
+    bulk call. Returns (instruments, error): error is None on success, "auth" on
+    401/403 (bad key, or a key for the wrong T212_MODE — live and practice are
+    separate accounts with separate keys/secrets), "unavailable" on any other
+    failure. instruments is [] whenever error is set."""
     try:
         resp = requests.get(f"{T212_BASE}/equity/metadata/instruments",
                             headers=t212_auth_header(), timeout=30)
+        if resp.status_code in (401, 403):
+            return [], "auth"
         if resp.status_code != 200:
             print(f"T212 API error: HTTP {resp.status_code}")
-            return []
-        return resp.json()
+            return [], "unavailable"
+        return resp.json(), None
     except Exception as e:
         print(f"T212 error: {e}")
-        return []
+        return [], "unavailable"
 
 def analyse_news(name, news_items):
     if news_items is None:

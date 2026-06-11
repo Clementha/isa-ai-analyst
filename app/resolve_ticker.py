@@ -5,7 +5,7 @@
 #
 # Usage: python3 /app/resolve_ticker.py "GSK"
 import sys
-from lib import search_eodhd, fetch_eod_data, eodhd_ticker_from_t212, fetch_t212_instruments
+from lib import search_eodhd, fetch_eod_data, eodhd_ticker_from_t212, fetch_t212_instruments, is_valid_query
 
 # London-traded lines settle in pence (GBX) or occasionally GBP. A fund can list
 # multiple currency classes under ONE ISIN (e.g. RBTX=GBX, RBOT=USD), so ISIN
@@ -94,6 +94,10 @@ def main():
     if not query:
         print("Usage: python3 /app/resolve_ticker.py <stock name>")
         sys.exit(1)
+    if not is_valid_query(query):
+        print(f"INVALID: '{query}' contains unexpected characters. Use only letters, numbers, "
+              "spaces and . & - ( ) / '. Ask the user to re-enter the stock name.")
+        sys.exit(1)
 
     # --- Primary path: EODHD search -> ISIN + currency match on both sides ---
     results = search_eodhd(query)
@@ -105,7 +109,13 @@ def main():
             eodhd_ticker = f"{row.get('Code')}.{row.get('Exchange')}"
             eodhd_cur = (row.get('Currency') or '?').upper()
 
-            instruments = fetch_t212_instruments()
+            instruments, t212_err = fetch_t212_instruments()
+            if t212_err == "auth":
+                print("AUTH_FAIL: Trading 212 rejected the API key (HTTP 401).")
+                print("  Live and practice are SEPARATE T212 accounts, each with its own KEY_ID + SECRET. "
+                      "Check that T212_KEY_ID/T212_SECRET in .env belong to the account matching T212_MODE "
+                      "(live for ISA, practice for demo), then update .env and rebuild.")
+                return
             if not instruments:
                 print(f"RETRY: T212 instrument list unavailable (API error or rate limit).")
                 print(f"  EODHD ticker: {eodhd_ticker} ({eodhd_cur})")
@@ -138,7 +148,12 @@ def main():
 
     # --- Fallback path: search T212 instrument list directly by name ---
     print(f"EODHD search unavailable for '{query}', falling back to T212 name search...")
-    instruments = fetch_t212_instruments()
+    instruments, t212_err = fetch_t212_instruments()
+    if t212_err == "auth":
+        print("AUTH_FAIL: Trading 212 rejected the API key (HTTP 401). Check that T212_KEY_ID/T212_SECRET "
+              "in .env belong to the account matching T212_MODE — live and practice are separate accounts "
+              "with separate keys/secrets — then update .env and rebuild.")
+        sys.exit(1)
     if not instruments:
         print(f"NOT FOUND: Could not reach T212 API.")
         sys.exit(1)

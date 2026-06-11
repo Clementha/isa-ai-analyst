@@ -7,12 +7,16 @@
 #    or: python3 /app/check_stock.py "BA.LSE"
 import sys
 import datetime
-from lib import search_eodhd, fetch_eod_data, fetch_news, evaluate_gates
+from lib import search_eodhd, fetch_eod_data, fetch_news, evaluate_gates, is_valid_query
 
 def main():
     query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else ""
     if not query:
         print("Usage: python3 /app/check_stock.py <stock name or EODHD ticker>")
+        sys.exit(1)
+    if not is_valid_query(query):
+        print(f"INVALID: '{query}' contains unexpected characters. Use only letters, numbers, "
+              "spaces and . & - ( ) / '. Ask the user to re-enter the stock name.")
         sys.exit(1)
 
     # Resolve ticker — accept direct EODHD format (e.g. BA.LSE) or search by name

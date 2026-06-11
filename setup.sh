@@ -199,7 +199,9 @@ run_setup() {
     echo "🧠 Configuring AI Model via Official CLI..."
     # 2. THE NATIVE FIX: We let OpenClaw's own CLI safely write the model to openclaw.json
     docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "$DEFAULT_LLM_MODEL" > /dev/null 2>&1
-    
+    # Keep Telegram answer-streaming but hide transient tool-execution/progress chatter
+    docker exec isa_ai_analyst openclaw config set channels.telegram.streaming.preview.toolProgress false > /dev/null 2>&1
+
     echo "💉 Safely injecting API Keys..."
     # 3. Auth profiles are perfectly fine to manually inject
     mkdir -p openclaw_data/agents/main/agent

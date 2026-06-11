@@ -28,7 +28,7 @@ DEFAULT_STOCK_WEIGHT = 0.25  # per-holding target cap, matching the README 25% m
 
 def load_config():
     """Existing config (to preserve cash %, ISA target, DCA limit) or defaults."""
-    defaults = {"isa_allowance_target": 20000, "target_cash_pct": 0.10,
+    defaults = {"isa_allowance_target": 20000, "target_cash_pct": 0.25,
                 "daily_dca_limit": 500, "holdings": {}}
     try:
         with open(CONFIG_PATH) as f:
@@ -40,24 +40,33 @@ def load_config():
         return defaults
 
 def fetch_positions():
-    """T212 open positions, or None on API error (distinct from [] = no holdings)."""
+    """T212 open positions. Returns (positions, error): error is None on success,
+    "auth" on 401/403 (bad key or wrong T212_MODE), "unavailable" on other errors.
+    positions is None unless the call succeeded (a successful empty account = [])."""
     try:
         resp = requests.get(f"{T212_BASE}/equity/portfolio",
                             headers=t212_auth_header(), timeout=30)
+        if resp.status_code in (401, 403):
+            return None, "auth"
         if resp.status_code != 200:
-            return None
+            return None, "unavailable"
         data = resp.json()
-        return data if isinstance(data, list) else None
+        return (data, None) if isinstance(data, list) else (None, "unavailable")
     except Exception:
-        return None
+        return None, "unavailable"
 
 def build_proposal():
     """Returns (cfg, holdings, proposed, cash_pct) or None after printing a
     NO_HOLDINGS / RETRY status line for the agent."""
     cfg = load_config()
-    cash_pct = cfg.get("target_cash_pct", 0.10)
+    cash_pct = cfg.get("target_cash_pct", 0.25)
 
-    positions = fetch_positions()
+    positions, t212_err = fetch_positions()
+    if t212_err == "auth":
+        print("AUTH_FAIL: Trading 212 rejected the API key (HTTP 401). Live and practice are separate "
+              "T212 accounts with separate KEY_ID + SECRET — check that T212_KEY_ID/T212_SECRET in .env "
+              "belong to the account matching T212_MODE, then update .env and rebuild.")
+        return None
     if positions is None:
         print("RETRY: Trading 212 is temporarily unavailable. Ask the user to try again in a minute.")
         return None
@@ -65,7 +74,7 @@ def build_proposal():
         print("NO_HOLDINGS: No open positions in the Trading 212 account to import.")
         return None
 
-    instruments = fetch_t212_instruments()
+    instruments, _ = fetch_t212_instruments()
     meta = {i.get('ticker'): i for i in instruments} if instruments else {}
 
     # Compute each holding's £ value (GBX/pence lines -> /100, like the engine).
@@ -154,13 +163,18 @@ def main():
     usage = fetch_eodhd_usage()
     needed = n * CALLS_PER_TICKER_PER_DAY
     if usage and usage.get("limit"):
-        if needed > usage["limit"]:
+        daily = usage["limit"]
+        extra = usage.get("extra", 0)
+        effective = daily + extra  # daily allowance + purchased/bonus call pool
+        extra_note = f" + {extra} extra" if extra else ""
+        if needed > effective:
             print(f"  QUOTA_WARN: {n} holdings need ~{needed} EODHD calls/day, over your "
-                  f"'{usage['plan']}' limit of {usage['limit']}/day. Some report lines may show "
-                  f"incomplete data; suggest a paid EODHD plan.")
+                  f"available EODHD quota ({daily}/day{extra_note}). Some report lines may show "
+                  f"incomplete data; suggest a paid EODHD plan or call package.")
         else:
-            print(f"  QUOTA_OK: {n} holdings need ~{needed} EODHD calls/day, within the "
-                  f"'{usage['plan']}' limit of {usage['limit']}/day.")
+            reserve = f" (+{extra} extra calls in reserve)" if extra else ""
+            print(f"  QUOTA_OK: {n} holdings need ~{needed} EODHD calls/day, within your "
+                  f"'{usage['plan']}' quota of {daily}/day{reserve}.")
 
     print(f"Staged to {PROPOSED_PATH}. After the user confirms with YES, "
           f"run: python3 /app/import_portfolio.py --commit")
