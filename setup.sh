@@ -201,6 +201,9 @@ run_setup() {
     docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "$DEFAULT_LLM_MODEL" > /dev/null 2>&1
     # Keep Telegram answer-streaming but hide transient tool-execution/progress chatter
     docker exec isa_ai_analyst openclaw config set channels.telegram.streaming.preview.toolProgress false > /dev/null 2>&1
+    # Slow the agent heartbeat to 4h. Scheduled reports and Telegram commands are
+    # event-driven and unaffected; this cuts the dominant LLM running cost by ~87%.
+    docker exec isa_ai_analyst openclaw config set agents.defaults.heartbeat.every "240m" > /dev/null 2>&1
 
     echo "💉 Safely injecting API Keys..."
     # 3. Auth profiles are perfectly fine to manually inject

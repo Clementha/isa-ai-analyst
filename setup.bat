@@ -229,6 +229,9 @@ echo [*] Configuring AI Model via Official CLI...
 docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "%DEFAULT_LLM_MODEL%" >nul 2>&1
 REM Keep Telegram answer-streaming but hide transient tool-execution/progress chatter
 docker exec isa_ai_analyst openclaw config set channels.telegram.streaming.preview.toolProgress false >nul 2>&1
+REM Slow the agent heartbeat to 4h. Scheduled reports and Telegram commands are
+REM event-driven and unaffected; this cuts the dominant LLM running cost by ~87%.
+docker exec isa_ai_analyst openclaw config set agents.defaults.heartbeat.every "240m" >nul 2>&1
 
 echo [*] Safely injecting API Keys...
 if not exist openclaw_data\agents\main\agent mkdir openclaw_data\agents\main\agent

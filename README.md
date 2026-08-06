@@ -89,7 +89,7 @@ Today's News (tap to expand ▾):
 | 🔴 RED | One or more gates failed — action is SELL or AVOID |
 | 👍 | That individual gate passed |
 | 👎 | That individual gate failed — this is what triggered a RED signal |
-| 🤷 | No recent news found — news gate skipped, not counted as a fail |
+| 🤷 | No news to assess — news gate skipped, not counted as a fail. The report says whether this is a quiet spell (and the date of the most recent article) or no news coverage at all |
 | ⚠️ (in the Gates line) | News gate could not be evaluated (AI API error) — treated as a fail |
 | ⚠️ (next to a headline) | Marks the specific article that triggered a News 👎 — read it to verify the verdict |
 
@@ -110,6 +110,8 @@ Before issuing any BUY recommendation, the analyst requires a stock to pass **th
 | **News** | AI scans up to 10 headlines from the past 30 days and blocks entry if severe fundamental risks are detected (fraud, lawsuits, credit downgrades, regulatory sanctions). The report shows exactly which article triggered a flag so you can verify the verdict yourself | Protects against value traps — stocks that look cheap on price but are deteriorating fundamentally |
 
 All three gates must be green simultaneously. One red gate = no recommendation.
+
+> ⚠️ **News coverage varies by instrument.** Individual shares are generally well covered, but **ETFs and investment trusts often have little or no ticker-level news** in the data feed — many have none at all. When there is nothing to assess, the News gate is skipped (🤷) rather than failed, so a portfolio made up entirely of ETFs is effectively screened by the Trend and Volatility gates alone. The report states this explicitly for each holding, so you always know whether the news check actually ran.
 
 ### Dollar-Cost Averaging (DCA)
 
@@ -242,7 +244,7 @@ This step is identical on both platforms. Work through each service in order and
 
 1. Sign up at **[openrouter.ai](https://openrouter.ai)** and verify your email
 2. > ⚠️ **Before adding any credit:** go to **Settings → Credits** and make sure **Auto top-up is OFF**. This prevents unexpected charges.
-3. Add credit — for a typical portfolio, expect around **US$4–5 per month** of regular usage. Start with US$10–20 to avoid topping up frequently.
+3. Add credit — for a typical portfolio, expect roughly **US$1–2 per month** of regular usage (setup tunes the agent heartbeat down to keep costs low — see [ADVANCED.md](ADVANCED.md#-running-costs)). Start with US$10 to avoid topping up frequently.
 4. Go to **Keys** → **Create Key** — name it `ISA AI Analyst`
 5. Copy the key
 

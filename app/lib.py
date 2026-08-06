@@ -58,35 +58,55 @@ def fetch_eod_data(symbol):
     except Exception:
         return []
 
+NEWS_WINDOW_DAYS = 30
+
 def fetch_news(symbol):
-    from_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+    """Fetch recent news for a symbol.
+
+    Returns (items, newest_date) where:
+      items       — articles within the last NEWS_WINDOW_DAYS, or None on API error
+      newest_date — display date of the most recent article of ANY age, or None if
+                    EODHD has no coverage for this instrument at all.
+
+    We deliberately fetch without a `from` filter and window client-side, so a
+    single API call tells us both "is there news now?" and "does this instrument
+    have news coverage at all?" — many ETFs and investment trusts have none, and
+    that is worth reporting differently from a quiet news month.
+    """
     url = "https://eodhd.com/api/news"
-    params = {"api_token": EODHD_API_KEY, "s": symbol, "limit": 10, "from": from_date, "fmt": "json"}
+    params = {"api_token": EODHD_API_KEY, "s": symbol, "limit": 10, "fmt": "json"}
     try:
         resp = requests.get(url, params=params, timeout=10)
         if resp.status_code != 200:
             print(f"⚠️ EODHD news error for {symbol}: HTTP {resp.status_code} — {resp.text[:100]}")
-            return None  # API error — distinct from genuine no-news
+            return None, None  # API error — distinct from genuine no-news
         news = resp.json()
         if not isinstance(news, list):
             print(f"⚠️ EODHD news unexpected response for {symbol}: {str(news)[:100]}")
-            return None
-        items = []
+            return None, None
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=NEWS_WINDOW_DAYS)
+        items, newest_dt, newest_date = [], None, None
         for article in news:
             raw_date = article.get('date', '')
             try:
-                date_str = datetime.datetime.fromisoformat(raw_date.replace('Z', '+00:00')).strftime('%d %b')
+                published = datetime.datetime.fromisoformat(raw_date.replace('Z', '+00:00'))
+                date_str = published.strftime('%d %b')
             except Exception:
-                date_str = raw_date[:10] if raw_date else '?'
+                published, date_str = None, (raw_date[:10] if raw_date else '?')
+            if published and (newest_dt is None or published > newest_dt):
+                newest_dt, newest_date = published, published.strftime('%d %b %Y')
+            # Undated articles are kept — we cannot prove they are stale.
+            if published and published < cutoff:
+                continue
             items.append({
                 "date": date_str,
                 "title": html.unescape(article.get('title', '')),
                 "summary": html.unescape(article.get('content', '') or '')
             })
-        return items  # [] means genuinely no news, None means error
+        return items, newest_date  # [] means no news in window, None means error
     except Exception as e:
         print(f"⚠️ EODHD news exception for {symbol}: {e}")
-        return None
+        return None, None
 
 def eodhd_ticker_from_t212(t212_ticker):
     """Derive an EODHD LSE ticker from a T212 ticker. Handles both CODE_LSE_EQ

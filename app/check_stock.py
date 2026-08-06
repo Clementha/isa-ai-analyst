@@ -46,7 +46,8 @@ def main():
     except Exception:
         price_date = raw_date
 
-    gates = evaluate_gates(closes, fetch_news(eodhd_ticker), name)
+    recent_news, _ = fetch_news(eodhd_ticker)
+    gates = evaluate_gates(closes, recent_news, name)
 
     print(f"{name} ({eodhd_ticker}): £{latest:.4f} (as of {price_date})")
     print(f"SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}")

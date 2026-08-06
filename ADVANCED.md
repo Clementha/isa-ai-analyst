@@ -117,21 +117,21 @@ docker compose restart
 
 ### API Costs
 
-The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent every ~30 minutes to check for tasks, regardless of whether you are actively using the bot. At default settings this accounts for the majority of daily API spend (~US$4–5/month for typical usage — see the [README](README.md#-running-costs) for a full breakdown).
+The dominant running cost is OpenClaw's **agent heartbeat** — a keep-alive LLM call sent periodically to check for tasks, regardless of whether you are actively using the bot. Left at OpenClaw's own default (~30 minutes) it accounts for the majority of daily API spend (~US$4–5/month for typical usage — see the [README](README.md#-running-costs) for a full breakdown).
 
-We deliberately kept the heartbeat enabled. OpenClaw is an open platform, and the heartbeat is what makes it possible to build future capabilities on top of this bot — things like email check-ins, proactive alerts, or custom commands you define yourself. If you plan to extend the bot beyond scheduled ISA reports, the heartbeat is what makes that possible.
+**Setup therefore sets the heartbeat to 4 hours (`240m`)**, which cuts roughly 87% of that cost while keeping the capability alive. OpenClaw is an open platform, and the heartbeat is what makes it possible to build future capabilities on top of this bot — email check-ins, proactive alerts, or custom commands you define yourself. Your scheduled ISA reports and Telegram commands do **not** depend on it: reports are driven by `scheduler.py`, and chat messages wake the agent on arrival.
 
-That said, advanced users who prefer a leaner setup — pure scheduled reports with no proactive agent features — can reduce or disable this cadence:
+You can change the cadence at any time — it hot-reloads, so no restart is needed:
 
 ```bash
-# Reduce heartbeat to every 2 hours
-openclaw config set heartbeat.cadence "120"
+# Back to OpenClaw's default — needed if you add proactive skills or plugins
+docker exec isa_ai_analyst openclaw config set agents.defaults.heartbeat.every "30m"
 
-# Disable entirely
-openclaw config set heartbeat.cadence "0"
+# Or anything in between, e.g. every 2 hours
+docker exec isa_ai_analyst openclaw config set agents.defaults.heartbeat.every "120m"
 ```
 
-> ⚠️ **Disabling the heartbeat removes all proactive OpenClaw agent capabilities** — email check-ins, calendar reminders, and any other background monitoring tasks you may have configured. If you are using the bot purely for ISA reports and nothing else, this is safe to do. If you plan to extend it with other agent features, leave it enabled.
+> ⚠️ **Adding OpenClaw skills or plugins? Raise the heartbeat back up.** The 4-hour default is tuned for this bot's core job — scheduled ISA reports plus on-demand Telegram commands — neither of which uses the heartbeat. But anything **proactive** does: OpenClaw skills, plugins, email check-ins, calendar reminders, background monitoring. At `240m` those tasks can run up to four hours late. If you extend the bot this way, set the cadence back towards OpenClaw's own default (`30m`) and expect the running cost to rise accordingly.
 
 The report generation itself (the two daily analysis runs) costs a small fraction of the total — roughly US$0.001 per report.
 

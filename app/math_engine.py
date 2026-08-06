@@ -175,7 +175,7 @@ for t212_ticker, entry in universe.items():
     except ValueError:
         price_date = raw_date
 
-    recent_news = fetch_news(eodhd_ticker)
+    recent_news, newest_news_date = fetch_news(eodhd_ticker)
 
     # --- EVALUATE THE 3 GATES ---
     gates = evaluate_gates(closes, recent_news, name)
@@ -237,7 +237,10 @@ for t212_ticker, entry in universe.items():
     if recent_news is None:
         news_text = " - ⚠️ News fetch failed (API error or quota exceeded)."
     elif len(recent_news) == 0:
-        news_text = " - No recent news found."
+        if newest_news_date:
+            news_text = f" - No news in the last 30 days (most recent: {html.escape(newest_news_date)})."
+        else:
+            news_text = " - No news coverage for this instrument — common for ETFs and trusts, so the News gate cannot assess it."
     else:
         news_lines = []
         for i, item in enumerate(recent_news):
