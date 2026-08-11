@@ -7,7 +7,8 @@
 #    or: python3 /app/check_stock.py "BA.LSE"
 import sys
 import datetime
-from lib import search_eodhd, fetch_eod_data, fetch_news, evaluate_gates, is_valid_query
+from lib import (search_eodhd, fetch_eod_data, fetch_news, evaluate_gates, is_valid_query,
+                 fetch_fx_to_gbp)
 
 def main():
     query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else ""
@@ -23,6 +24,7 @@ def main():
     if '.' in query and len(query.split('.')) == 2 and ' ' not in query:
         eodhd_ticker = query.upper()
         name = eodhd_ticker
+        currency = None  # ticker given directly — quote currency unknown
     else:
         results = search_eodhd(query)
         if not results:
@@ -32,6 +34,7 @@ def main():
         match = lse[0] if lse else results[0]
         name = match.get('Name', query)
         eodhd_ticker = f"{match.get('Code', '')}.{match.get('Exchange', '')}"
+        currency = (match.get('Currency') or '').upper()
 
     data = fetch_eod_data(eodhd_ticker)
     if not data or len(data) < 2:
@@ -49,7 +52,11 @@ def main():
     recent_news, _ = fetch_news(eodhd_ticker)
     gates = evaluate_gates(closes, recent_news, name)
 
-    print(f"{name} ({eodhd_ticker}): £{latest:.4f} (as of {price_date})")
+    # EODHD quotes in the listing's own currency (pence for most LSE lines), so
+    # convert before labelling it £ — never print a pence figure as pounds.
+    rate = fetch_fx_to_gbp(currency) if currency else None
+    price_str = f"£{latest * rate:.4f}" if rate is not None else f"{latest:.4f} (currency unknown)"
+    print(f"{name} ({eodhd_ticker}): {price_str} (as of {price_date})")
     print(f"SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}")
     print(f"Overall: {'🟢 GREEN — would qualify for a BUY signal' if gates['all_green'] else '🔴 RED — would not qualify'}")
 

@@ -17,3 +17,5 @@ openclaw_data/
 
 # Ignore Claude Code local state (memory, image cache)
 .claude/
+# Cached T212 instrument metadata (ticker -> currency), regenerated automatically
+app/instruments_cache.*.json

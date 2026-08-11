@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 import re
+import json
 import html
 import base64
 import datetime
@@ -162,6 +163,77 @@ def fetch_t212_instruments():
     except Exception as e:
         print(f"T212 error: {e}")
         return [], "unavailable"
+
+INSTRUMENT_CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), f"instruments_cache.{T212_MODE}.json")
+INSTRUMENT_CACHE_TTL_DAYS = 30
+
+def get_instrument_currencies(required_tickers=()):
+    """Map of T212 ticker -> currencyCode, cached on disk.
+
+    T212 quotes each line in its own currency (GBX for most LSE equities, but GBP
+    for some ETFs and EUR/USD for foreign-denominated ones), and the ticker suffix
+    does NOT tell you which. Only this metadata does, so holding values must never
+    assume a unit.
+
+    The metadata call returns ~17k instruments, so it is cached and refetched only
+    when the cache is older than INSTRUMENT_CACHE_TTL_DAYS or is missing a ticker
+    you currently hold (i.e. you bought something new). Returns {} if unavailable.
+    """
+    required = {t for t in (required_tickers or ()) if t}
+    cached = None
+    try:
+        with open(INSTRUMENT_CACHE_PATH) as f:
+            cached = json.load(f)
+        fetched_at = datetime.datetime.fromisoformat(cached["fetched_at"])
+        age_days = (datetime.datetime.now(datetime.timezone.utc) - fetched_at).days
+        currencies = cached["currencies"]
+        if age_days < INSTRUMENT_CACHE_TTL_DAYS and required.issubset(currencies.keys()):
+            return currencies
+    except Exception:
+        pass  # missing/corrupt cache — refetch below
+
+    instruments, error = fetch_t212_instruments()
+    if error:
+        print(f"⚠️ T212 instrument metadata unavailable ({error}) — cannot confirm currencies.")
+        # A stale cache still beats guessing a unit.
+        return (cached or {}).get("currencies", {})
+
+    currencies = {i["ticker"]: (i.get("currencyCode") or "")
+                  for i in instruments if i.get("ticker")}
+    try:
+        with open(INSTRUMENT_CACHE_PATH, "w") as f:
+            json.dump({"fetched_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                       "currencies": currencies}, f)
+    except Exception as e:
+        print(f"⚠️ Could not write instrument cache: {e}")
+    return currencies
+
+_FX_CACHE = {}
+
+def fetch_fx_to_gbp(currency):
+    """Multiplier converting `currency` into GBP, or None if it can't be determined.
+
+    GBX is pence, so 0.01. Anything else non-GBP needs a real rate, fetched from
+    EODHD's FOREX feed. Memoised for the life of the process, so a currency is
+    only ever fetched once per run no matter how many holdings use it."""
+    if currency == "GBP":
+        return 1.0
+    if currency == "GBX":
+        return 0.01
+    if currency in _FX_CACHE:
+        return _FX_CACHE[currency]
+    data = fetch_eod_data(f"{currency}GBP.FOREX")
+    rate = None
+    if not data:
+        print(f"⚠️ No FX rate available for {currency}→GBP.")
+    else:
+        try:
+            rate = float(data[-1]['close'])
+        except Exception:
+            print(f"⚠️ Unreadable FX rate for {currency}→GBP.")
+    _FX_CACHE[currency] = rate
+    return rate
 
 def analyse_news(name, news_items):
     if news_items is None:

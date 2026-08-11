@@ -18,7 +18,7 @@ import os
 import json
 import requests
 from lib import (t212_auth_header, fetch_t212_instruments, eodhd_ticker_from_t212,
-                 fetch_eodhd_usage, T212_BASE)
+                 fetch_eodhd_usage, fetch_fx_to_gbp, T212_BASE)
 
 CONFIG_PATH = '/app/portfolio_targets.json'
 PROPOSED_PATH = '/app/portfolio_targets.proposed.json'
@@ -77,20 +77,33 @@ def build_proposal():
     instruments, _ = fetch_t212_instruments()
     meta = {i.get('ticker'): i for i in instruments} if instruments else {}
 
-    # Compute each holding's £ value (GBX/pence lines -> /100, like the engine).
+    # Compute each holding's £ value. T212 quotes each line in its OWN currency
+    # (GBX for most LSE equities, GBP for some ETFs, EUR/USD for foreign lines),
+    # so convert per instrument — never assume pence. A holding we cannot value
+    # is skipped rather than given a wrong weight.
     holdings = []
+    fx_rates = {}
     for pos in positions:
         ticker = pos.get('ticker')
         qty = pos.get('quantity', 0) or 0
         price = pos.get('currentPrice', 0) or 0
-        value = qty * price / 100
         info = meta.get(ticker, {})
+        currency = (info.get('currencyCode') or '').upper()
+        if not currency:
+            print(f"⚠️ Skipping {ticker}: unknown currency, cannot value it.")
+            continue
+        if currency not in fx_rates:
+            fx_rates[currency] = fetch_fx_to_gbp(currency)
+        rate = fx_rates[currency]
+        if rate is None:
+            print(f"⚠️ Skipping {ticker}: no {currency}→GBP rate available.")
+            continue
         holdings.append({
             "t212_ticker": ticker,
             "eodhd_ticker": eodhd_ticker_from_t212(ticker),
             "name": info.get('name', ticker),
-            "currency": (info.get('currencyCode') or '?').upper(),
-            "value": value,
+            "currency": currency,
+            "value": qty * price * rate,
         })
 
     total = sum(h["value"] for h in holdings)

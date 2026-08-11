@@ -9,7 +9,8 @@ import html
 import datetime
 import sys
 import urllib.parse
-from lib import get_secret, fetch_eod_data, fetch_news, evaluate_gates, eodhd_ticker_from_t212, EODHD_API_KEY, T212_BASE, T212_MODE
+from lib import (get_secret, fetch_eod_data, fetch_news, evaluate_gates, eodhd_ticker_from_t212,
+                 get_instrument_currencies, fetch_fx_to_gbp, EODHD_API_KEY, T212_BASE, T212_MODE)
 
 # Session mode: passed from scheduler ("morning"/"evening"), or auto-detected by time of day.
 # Anything before 14:00 = morning briefing; 14:00+ = evening analysis.
@@ -76,12 +77,27 @@ def fetch_t212_portfolio():
         free_cash = cash_resp.get('free', 0)
 
         # The portfolio endpoint has no ready value field — it returns quantity and
-        # currentPrice (in GBX/pence for LSE lines), so compute each value in £.
+        # currentPrice in the INSTRUMENT'S OWN currency (GBX for most LSE equities,
+        # but GBP for some ETFs and EUR/USD for foreign-denominated lines). The
+        # ticker suffix does not indicate the unit, so look it up and convert.
+        # A value of None means "could not be valued" — never a guessed number.
+        positions = pos_resp if isinstance(pos_resp, list) else []
+        currencies = get_instrument_currencies([p.get('ticker') for p in positions])
+        fx_rates = {}
         portfolio = {}
-        for pos in pos_resp:
+        for pos in positions:
+            ticker = pos.get('ticker')
             qty = pos.get('quantity', 0)
-            price = pos.get('currentPrice', 0)  # GBX (pence) for UK lines
-            portfolio[pos['ticker']] = qty * price / 100
+            price = pos.get('currentPrice', 0)
+            currency = currencies.get(ticker)
+            if not currency:
+                print(f"⚠️ Unknown currency for {ticker} — cannot value this holding.")
+                portfolio[ticker] = None
+                continue
+            if currency not in fx_rates:
+                fx_rates[currency] = fetch_fx_to_gbp(currency)
+            rate = fx_rates[currency]
+            portfolio[ticker] = None if rate is None else qty * price * rate
 
         return total_value, free_cash, portfolio
     except Exception as e:
@@ -90,6 +106,20 @@ def fetch_t212_portfolio():
 
 # --- THE MATH ENGINE ---
 total_value, free_cash, current_positions = fetch_t212_portfolio()
+
+# Currency per T212 line, used to show closing prices in £. EODHD quotes each
+# listing in its own currency — pence for most LSE lines — so an unconverted
+# close reads as e.g. "£1404.50" for a share that actually costs £14.05. The
+# cache is already warm from valuation, so this costs no extra API call.
+# Assumes the mapped EODHD ticker is the same listing as the T212 line; if the
+# mapping points at a different exchange, we show the raw figure unlabelled.
+DISPLAY_CURRENCIES = get_instrument_currencies()
+
+def close_as_gbp(t212_ticker, close):
+    """(display_value, is_gbp) for a closing price."""
+    rate = fetch_fx_to_gbp(DISPLAY_CURRENCIES.get(t212_ticker) or "")
+    return (close * rate, True) if rate is not None else (close, False)
+
 today_str = datetime.datetime.now().strftime("%d %b %Y")
 
 mode_badge = "🧪 PRACTICE" if T212_MODE == "practice" else "🏦 LIVE"
@@ -148,16 +178,22 @@ for t212_ticker, entry in universe.items():
     t212_d = html.escape(t212_ticker)
     eodhd_d = html.escape(eodhd_ticker)
 
+    # current_value is None when the holding could not be valued (unknown currency
+    # or missing FX rate). We show that plainly and make no buy/sell call on it —
+    # a guessed valuation would drive a real trade recommendation.
     current_value = entry["current_value"]
-    current_pct = (current_value / total_value) * 100 if total_value > 0 else 0
+    valued = current_value is not None
+    current_pct = (current_value / total_value) * 100 if valued and total_value > 0 else 0
+    value_str = f"£{current_value:.2f}" if valued else "value unavailable"
+    pct_str = f"{current_pct:.1f}%" if valued else "?"
     target_value = ISA_ALLOWANCE * target_pct
-    delta_value = target_value - current_value
+    delta_value = (target_value - current_value) if valued else 0
 
     data = fetch_eod_data(eodhd_ticker) if eodhd_ticker else []
     if not data or len(data) < 20:
         if untracked:
             # Surface it loudly (the whole point) even when we can't price it.
-            report_content += f"🔹 <b>{name_d} ({t212_d})</b> | Holding: {current_pct:.1f}% (£{current_value:.2f})\n"
+            report_content += f"🔹 <b>{name_d} ({t212_d})</b> | Holding: {pct_str} ({value_str})\n"
             report_content += "Signal: 🟡 UNTRACKED — held but not in your targets, and couldn't fetch market data.\n"
             report_content += "Action: Add it via the bot ('Add ...') or exit the position. (Could also be EODHD quota.)\n\n"
         else:
@@ -167,6 +203,8 @@ for t212_ticker, entry in universe.items():
 
     closes = [float(day['close']) for day in data]
     latest = closes[-1]
+    close_disp, close_is_gbp = close_as_gbp(t212_ticker, latest)
+    close_str = f"£{close_disp:.2f}" if close_is_gbp else f"{latest:.2f} (currency unknown)"
     prev = closes[-2]
 
     raw_date = data[-1].get('date', '')
@@ -183,11 +221,11 @@ for t212_ticker, entry in universe.items():
     untracked_tag = " ⚠️ UNTRACKED" if untracked else ""
 
     if SESSION == "morning":
-        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: {close_str} ({price_date})\n"
         if untracked:
-            report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → not in targets\n"
+            report_content += f"Holding: {pct_str} ({value_str}) → not in targets\n"
         else:
-            report_content += f"Holding: {current_pct:.1f}% (£{current_value:.2f}) → Target: {target_pct*100:.0f}%\n"
+            report_content += f"Holding: {pct_str} ({value_str}) → Target: {target_pct*100:.0f}%\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
         if gates['news_reason']:
             report_content += f"News: {html.escape(gates['news_reason'])}\n"
@@ -202,7 +240,8 @@ for t212_ticker, entry in universe.items():
                 action = "REVIEW — held but not in targets (add via the bot or trim)"
             else:
                 signal_color = "🔴 RED"
-                action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
+                action = (f"SELL ALL £{current_value:.2f}" if valued and current_value > 0
+                          else "SELL — review manually (value unavailable)" if not valued else "AVOID")
         elif gates['all_green']:
             signal_color = "🟢 GREEN"
             if delta_value > 50:
@@ -221,13 +260,14 @@ for t212_ticker, entry in universe.items():
                 action = "HOLD (Near target)"
         else:
             signal_color = "🔴 RED"
-            action = f"SELL ALL £{current_value:.2f}" if current_value > 0 else "AVOID"
+            action = (f"SELL ALL £{current_value:.2f}" if valued and current_value > 0
+                          else "SELL — review manually (value unavailable)" if not valued else "AVOID")
 
-        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: £{latest:.2f} ({price_date})\n"
+        report_content += f"🔹 <b>{name_d} ({t212_d} / {eodhd_d})</b>{untracked_tag} | Close: {close_str} ({price_date})\n"
         if untracked:
-            report_content += f"Current: {current_pct:.1f}% (£{current_value:.2f}) | Not in targets\n"
+            report_content += f"Current: {pct_str} ({value_str}) | Not in targets\n"
         else:
-            report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {current_pct:.1f}% (£{current_value:.2f})\n"
+            report_content += f"Target: {target_pct*100:.0f}% (£{target_value:.2f}) | Current: {pct_str} ({value_str})\n"
         report_content += f"Signal: {signal_color} [{action}]\n"
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
         if gates['news_reason']:
