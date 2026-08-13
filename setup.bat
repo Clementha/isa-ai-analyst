@@ -220,13 +220,33 @@ docker compose up -d >nul 2>&1
 echo [*] Waiting for agent to start... (This takes about 30-60 seconds)
 echo     Please wait, do not close this window...
 
+:: Wait for the gateway itself, NOT for a channel. On a first install there is no
+:: openclaw.json yet, so no Telegram channel exists to log "starting provider" —
+:: waiting on that deadlocks. The gateway always logs "ready".
+set WAIT_COUNT=0
 :WAIT_LOOP
 timeout /t 2 >nul
-docker logs isa_ai_analyst 2>&1 | findstr /c:"starting provider" >nul
-if errorlevel 1 goto WAIT_LOOP
+docker logs isa_ai_analyst 2>&1 | findstr /c:"[gateway] ready" >nul
+if not errorlevel 1 goto AGENT_READY
+set /a WAIT_COUNT+=1
+if %WAIT_COUNT% GEQ 90 goto WAIT_FAILED
+goto WAIT_LOOP
 
+:WAIT_FAILED
+echo.
+echo [!] The agent did not start within 3 minutes.
+echo     See what went wrong with:  docker compose logs
+echo     Common causes: a slow first-time image download, or Docker running out of memory.
+pause
+goto SHOW_MENU
+
+:AGENT_READY
 echo [*] Configuring AI Model via Official CLI...
 docker exec isa_ai_analyst openclaw config set agents.defaults.model.primary "%DEFAULT_LLM_MODEL%" >nul 2>&1
+REM Turn the Telegram channel on. A fresh install has no config file, and the
+REM channel is not enabled from the environment alone — without this the bot
+REM never appears on Telegram. The token itself still comes from .env.
+docker exec isa_ai_analyst openclaw config set channels.telegram.enabled true >nul 2>&1
 REM Keep Telegram answer-streaming but hide transient tool-execution/progress chatter
 docker exec isa_ai_analyst openclaw config set channels.telegram.streaming.preview.toolProgress false >nul 2>&1
 REM Slow the agent heartbeat to 4h. Scheduled reports and Telegram commands are
