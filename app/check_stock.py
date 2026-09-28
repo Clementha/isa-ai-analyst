@@ -49,8 +49,8 @@ def main():
     except Exception:
         price_date = raw_date
 
-    recent_news, _ = fetch_news(eodhd_ticker)
-    gates = evaluate_gates(closes, recent_news, name)
+    recent_news, _, news_fetch_error = fetch_news(eodhd_ticker)
+    gates = evaluate_gates(closes, recent_news, name, news_fetch_error)
 
     # EODHD quotes in the listing's own currency (pence for most LSE lines), so
     # convert before labelling it £ — never print a pence figure as pounds.
@@ -58,7 +58,13 @@ def main():
     price_str = f"£{latest * rate:.4f}" if rate is not None else f"{latest:.4f} (currency unknown)"
     print(f"{name} ({eodhd_ticker}): {price_str} (as of {price_date})")
     print(f"SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}")
-    print(f"Overall: {'🟢 GREEN — would qualify for a BUY signal' if gates['all_green'] else '🔴 RED — would not qualify'}")
+    if gates['all_green']:
+        verdict = "🟢 GREEN — would qualify for a BUY signal"
+    elif gates['news_error'] and gates['sma_pass'] and gates['vol_pass']:
+        verdict = f"🟡 UNVERIFIED — {gates['news_error_detail']}; no risk found, but not cleared to buy"
+    else:
+        verdict = "🔴 RED — would not qualify"
+    print(f"Overall: {verdict}")
 
 if __name__ == "__main__":
     main()

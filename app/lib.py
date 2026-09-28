@@ -6,6 +6,7 @@ import os
 import re
 import json
 import html
+import time
 import base64
 import datetime
 import statistics
@@ -60,14 +61,23 @@ def fetch_eod_data(symbol):
         return []
 
 NEWS_WINDOW_DAYS = 30
+# The feed normally answers in well under a second. A 10s ceiling with no retry
+# meant an occasional network stall was reported as a failed risk check, so give
+# it more room and one second chance before giving up.
+NEWS_TIMEOUT_SECONDS = 20
+NEWS_ATTEMPTS = 2
 
 def fetch_news(symbol):
     """Fetch recent news for a symbol.
 
-    Returns (items, newest_date) where:
-      items       — articles within the last NEWS_WINDOW_DAYS, or None on API error
-      newest_date — display date of the most recent article of ANY age, or None if
-                    EODHD has no coverage for this instrument at all.
+    Returns (items, newest_date, error) where:
+      items       — articles within the last NEWS_WINDOW_DAYS, or None if the
+                    feed could not be read
+      newest_date — display date of the most recent article of ANY age, or None
+                    if EODHD has no coverage for this instrument at all
+      error       — None on success, else a short reason the feed could not be
+                    read, so the report can say what actually went wrong instead
+                    of guessing at the cause
 
     We deliberately fetch without a `from` filter and window client-side, so a
     single API call tells us both "is there news now?" and "does this instrument
@@ -76,38 +86,55 @@ def fetch_news(symbol):
     """
     url = "https://eodhd.com/api/news"
     params = {"api_token": EODHD_API_KEY, "s": symbol, "limit": 10, "fmt": "json"}
-    try:
-        resp = requests.get(url, params=params, timeout=10)
-        if resp.status_code != 200:
-            print(f"⚠️ EODHD news error for {symbol}: HTTP {resp.status_code} — {resp.text[:100]}")
-            return None, None  # API error — distinct from genuine no-news
-        news = resp.json()
-        if not isinstance(news, list):
-            print(f"⚠️ EODHD news unexpected response for {symbol}: {str(news)[:100]}")
-            return None, None
-        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=NEWS_WINDOW_DAYS)
-        items, newest_dt, newest_date = [], None, None
-        for article in news:
-            raw_date = article.get('date', '')
-            try:
-                published = datetime.datetime.fromisoformat(raw_date.replace('Z', '+00:00'))
-                date_str = published.strftime('%d %b')
-            except Exception:
-                published, date_str = None, (raw_date[:10] if raw_date else '?')
-            if published and (newest_dt is None or published > newest_dt):
-                newest_dt, newest_date = published, published.strftime('%d %b %Y')
-            # Undated articles are kept — we cannot prove they are stale.
-            if published and published < cutoff:
-                continue
-            items.append({
-                "date": date_str,
-                "title": html.unescape(article.get('title', '')),
-                "summary": html.unescape(article.get('content', '') or '')
-            })
-        return items, newest_date  # [] means no news in window, None means error
-    except Exception as e:
-        print(f"⚠️ EODHD news exception for {symbol}: {e}")
-        return None, None
+    last_error = None
+
+    for attempt in range(1, NEWS_ATTEMPTS + 1):
+        news = None
+        try:
+            resp = requests.get(url, params=params, timeout=NEWS_TIMEOUT_SECONDS)
+            if resp.status_code in (402, 429):
+                last_error = f"EODHD quota or rate limit reached (HTTP {resp.status_code})"
+            elif resp.status_code != 200:
+                last_error = f"EODHD returned HTTP {resp.status_code}"
+            else:
+                parsed = resp.json()
+                if isinstance(parsed, list):
+                    news = parsed
+                else:
+                    last_error = "EODHD returned an unexpected response"
+        except requests.exceptions.Timeout:
+            last_error = f"EODHD news feed timed out after {NEWS_TIMEOUT_SECONDS}s"
+        except Exception as e:
+            last_error = f"EODHD news feed unreachable ({type(e).__name__})"
+
+        if news is not None:
+            cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=NEWS_WINDOW_DAYS)
+            items, newest_dt, newest_date = [], None, None
+            for article in news:
+                raw_date = article.get('date', '')
+                try:
+                    published = datetime.datetime.fromisoformat(raw_date.replace('Z', '+00:00'))
+                    date_str = published.strftime('%d %b')
+                except Exception:
+                    published, date_str = None, (raw_date[:10] if raw_date else '?')
+                if published and (newest_dt is None or published > newest_dt):
+                    newest_dt, newest_date = published, published.strftime('%d %b %Y')
+                # Undated articles are kept — we cannot prove they are stale.
+                if published and published < cutoff:
+                    continue
+                items.append({
+                    "date": date_str,
+                    "title": html.unescape(article.get('title', '')),
+                    "summary": html.unescape(article.get('content', '') or '')
+                })
+            return items, newest_date, None  # [] means no news in window
+
+        if attempt < NEWS_ATTEMPTS:
+            print(f"⚠️ EODHD news attempt {attempt}/{NEWS_ATTEMPTS} for {symbol}: {last_error} — retrying")
+            time.sleep(1.5)
+
+    print(f"⚠️ EODHD news failed for {symbol}: {last_error}")
+    return None, None, last_error
 
 def eodhd_ticker_from_t212(t212_ticker):
     """Derive an EODHD LSE ticker from a T212 ticker. Handles both CODE_LSE_EQ
@@ -235,14 +262,19 @@ def fetch_fx_to_gbp(currency):
     _FX_CACHE[currency] = rate
     return rate
 
-def analyse_news(name, news_items):
+def analyse_news(name, news_items, fetch_error=None):
+    """Classify recent headlines. `fetch_error` explains why news_items is None,
+    so an ERROR verdict can say what actually failed rather than being reported
+    as a generic problem."""
     if news_items is None:
-        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": [],
+                "error_detail": fetch_error or "news feed unavailable"}
     if len(news_items) == 0:
-        return {"verdict": "NO_NEWS", "reason": None, "guilty_indices": []}
+        return {"verdict": "NO_NEWS", "reason": None, "guilty_indices": [], "error_detail": None}
     if not LLM_API_KEY or not LLM_BASE_URL:
         print(f"⚠️ CONFIG ERROR: Missing LLM_API_KEY or LLM_BASE_URL for {name}.")
-        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": [],
+                "error_detail": "AI analysis not configured (missing LLM_API_KEY or LLM_BASE_URL)"}
 
     numbered_news = "\n".join(
         f"[{i+1}] [{item['date']}] {item['title']}" + (f"\n  {item['summary'][:200]}" if item['summary'] else "")
@@ -289,15 +321,22 @@ def analyse_news(name, news_items):
                         guilty_indices = [int(n.strip()) - 1 for n in nums if n.strip().isdigit()]
                     except Exception:
                         pass
-        return {"verdict": verdict, "reason": reason, "guilty_indices": guilty_indices}
+        return {"verdict": verdict, "reason": reason, "guilty_indices": guilty_indices,
+                "error_detail": None}
     except Exception as e:
         print(f"❌ LLM API Error for {name}: {e}")
-        return {"verdict": "ERROR", "reason": None, "guilty_indices": []}
+        detail = "AI news analysis unavailable"
+        text = str(e)
+        if "402" in text or "credit" in text.lower() or "billing" in text.lower():
+            detail = "AI news analysis unavailable — LLM provider out of credits"
+        elif "timeout" in text.lower() or "timed out" in text.lower():
+            detail = "AI news analysis timed out"
+        return {"verdict": "ERROR", "reason": None, "guilty_indices": [], "error_detail": detail}
 
-def evaluate_gates(closes, news_items, name):
+def evaluate_gates(closes, news_items, name, news_fetch_error=None):
     sma_pass = closes[-1] > statistics.mean(closes)
     vol_pass = abs((closes[-1] - closes[-2]) / closes[-2]) * 100 < 5.0
-    news_result = analyse_news(name, news_items)
+    news_result = analyse_news(name, news_items, news_fetch_error)
     verdict = news_result["verdict"]
 
     if verdict == "NO_NEWS":
@@ -319,4 +358,9 @@ def evaluate_gates(closes, news_items, name):
         "all_green": sma_pass and vol_pass and news_pass,
         "news_reason": news_result["reason"],
         "news_guilty": news_result["guilty_indices"],
+        # ERROR means the check could not be completed — NOT that a risk was
+        # found. news_pass stays False either way (never a BUY on an unverified
+        # holding), but callers must not treat this as a sell signal.
+        "news_error": verdict == "ERROR",
+        "news_error_detail": news_result.get("error_detail"),
     }

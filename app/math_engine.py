@@ -213,10 +213,16 @@ for t212_ticker, entry in universe.items():
     except ValueError:
         price_date = raw_date
 
-    recent_news, newest_news_date = fetch_news(eodhd_ticker)
+    recent_news, newest_news_date, news_fetch_error = fetch_news(eodhd_ticker)
 
     # --- EVALUATE THE 3 GATES ---
-    gates = evaluate_gates(closes, recent_news, name)
+    gates = evaluate_gates(closes, recent_news, name, news_fetch_error)
+
+    # The news gate ERRORED: the feed or the AI was unavailable, so the check
+    # could not be completed. That is not a risk finding. The gate still blocks
+    # any BUY (news_pass is False), but when everything we COULD check passed we
+    # must not advise selling a holding because a network call failed.
+    news_unverified = gates['news_error'] and gates['sma_pass'] and gates['vol_pass']
 
     untracked_tag = " ⚠️ UNTRACKED" if untracked else ""
 
@@ -229,7 +235,13 @@ for t212_ticker, entry in universe.items():
         report_content += f"Gates: SMA {gates['sma_icon']} | Vol {gates['vol_icon']} | News {gates['news_icon']}\n"
         if gates['news_reason']:
             report_content += f"News: {html.escape(gates['news_reason'])}\n"
-        report_content += f"Outlook: {'🟢 GREEN' if gates['all_green'] else '🔴 RISK FLAGGED'}\n"
+        if gates['all_green']:
+            outlook = "🟢 GREEN"
+        elif news_unverified:
+            outlook = "🟡 UNVERIFIED — news check incomplete, no risk found"
+        else:
+            outlook = "🔴 RISK FLAGGED"
+        report_content += f"Outlook: {outlook}\n"
         news_label = "Overnight News"
     else:
         if untracked:
@@ -238,6 +250,9 @@ for t212_ticker, entry in universe.items():
             if gates['all_green']:
                 signal_color = "🟡 UNTRACKED"
                 action = "REVIEW — held but not in targets (add via the bot or trim)"
+            elif news_unverified:
+                signal_color = "🟡 UNTRACKED"
+                action = "REVIEW — held but not in targets; news check incomplete, so no risk verdict"
             else:
                 signal_color = "🔴 RED"
                 action = (f"SELL ALL £{current_value:.2f}" if valued and current_value > 0
@@ -258,6 +273,9 @@ for t212_ticker, entry in universe.items():
                         action = f"BUY £{buy_amount:.2f}"
             else:
                 action = "HOLD (Near target)"
+        elif news_unverified:
+            signal_color = "🟡 AMBER"
+            action = "HOLD — risk check incomplete, no action advised"
         else:
             signal_color = "🔴 RED"
             action = (f"SELL ALL £{current_value:.2f}" if valued and current_value > 0
@@ -275,7 +293,8 @@ for t212_ticker, entry in universe.items():
         news_label = "Today's News"
 
     if recent_news is None:
-        news_text = " - ⚠️ News fetch failed (API error or quota exceeded)."
+        reason = news_fetch_error or "reason unknown"
+        news_text = f" - ⚠️ Could not check news — {html.escape(reason)}. This is not a risk finding."
     elif len(recent_news) == 0:
         if newest_news_date:
             news_text = f" - No news in the last 30 days (most recent: {html.escape(newest_news_date)})."
@@ -286,6 +305,8 @@ for t212_ticker, entry in universe.items():
         for i, item in enumerate(recent_news):
             prefix = "⚠️ " if i in gates['news_guilty'] else ""
             news_lines.append(f" - {prefix}[{item['date']}] {html.escape(item['title'])}")
+        if gates['news_error'] and gates['news_error_detail']:
+            news_lines.insert(0, f" - ⚠️ {html.escape(gates['news_error_detail'])} — headlines below are UNCHECKED.")
         news_text = "\n".join(news_lines)
     report_content += f"{news_label}:\n<blockquote expandable>{news_text}</blockquote>\n\n"
 
