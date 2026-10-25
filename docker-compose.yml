@@ -4,7 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 services:
   isa_ai_analyst:
-    image: node:22-slim
+    # Pinned to an exact patch release so `docker compose up` pulls security fixes.
+    # A floating tag like node:22-slim is never re-pulled once cached locally.
+    image: node:22.23.4-slim
     container_name: isa_ai_analyst
     env_file:
       - .env
